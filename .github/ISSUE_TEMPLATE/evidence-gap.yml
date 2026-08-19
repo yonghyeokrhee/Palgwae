@@ -1,0 +1,32 @@
+name: Evidence gap
+description: Report a Palgwae UNKNOWN path or a claim whose evidence is insufficient.
+title: "[evidence-gap] "
+labels: ["evidence", "help wanted"]
+body:
+  - type: input
+    id: snapshot
+    attributes:
+      label: Snapshot ID
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Dependency question
+      description: Include the canonical source and target IDs when known.
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current structured result
+      description: Remove private names and credentials before posting.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Potential evidence
+      description: What public or synthetic source could close this boundary?
+    validations:
+      required: true

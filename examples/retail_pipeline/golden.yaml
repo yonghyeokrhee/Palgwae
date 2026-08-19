@@ -1,0 +1,36 @@
+version: 1
+
+questions:
+  - id: resolve-orders-daily
+    tool: find_entity
+    arguments: {query: orders_daily}
+    expect:
+      status: ANSWERED
+      contains_node_id: urn:example:palgwae:demo:dataset:orders-daily
+  - id: raw-orders-downstream
+    tool: get_downstream
+    arguments:
+      node_id: urn:example:palgwae:demo:dataset:raw-orders
+      max_hops: 5
+    expect:
+      status: ANSWERED
+      contains_node_id: urn:example:palgwae:demo:dataset:orders-daily
+  - id: schedule-to-marker
+    tool: find_dependency_path
+    arguments:
+      source_node_id: urn:example:palgwae:demo:trigger:daily-orders-schedule
+      target_node_id: urn:example:palgwae:demo:contract:orders-daily-ready-v1
+      max_hops: 8
+    expect: {status: ANSWERED}
+  - id: daily-table-impact
+    tool: assess_change_impact
+    arguments:
+      node_id: urn:example:palgwae:demo:dataset:orders-daily
+      max_hops: 3
+    expect:
+      status: ANSWERED
+      contains_node_id: urn:example:palgwae:demo:service:orders-api
+  - id: dynamic-target-is-unproven
+    tool: find_entity
+    arguments: {query: notification_target}
+    expect: {status: UNKNOWN}

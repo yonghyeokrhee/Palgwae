@@ -1,0 +1,11 @@
+contracts:
+  - name: orders-daily-ready-v1
+    producer: publish_orders
+    consumer: orders_api
+    meaning: The daily partition has been published and may be served.
+    empty_result: valid
+
+unresolved:
+  - source: publish_orders
+    target_hint: notification_target
+    reason: The notification target is supplied dynamically at deployment time.

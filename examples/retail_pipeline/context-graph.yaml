@@ -1,0 +1,189 @@
+version: 1
+ontology:
+  entities: ../../ontology/entities.yaml
+  relations: ../../ontology/relations.yaml
+
+project:
+  name: retail-pipeline
+  namespace: urn:example:palgwae:demo
+  revision: retail-demo-v1
+
+entities:
+  - id: urn:example:palgwae:demo:repository:retail-pipeline
+    type: Repository
+    name: retail-pipeline
+  - id: urn:example:palgwae:demo:environment:local
+    type: Environment
+    name: local
+  - id: urn:example:palgwae:demo:trigger:daily-orders-schedule
+    type: Trigger
+    name: daily_orders_schedule
+    attributes:
+      environment: local
+      kind: cron
+      schedule: "0 2 * * *"
+  - id: urn:example:palgwae:demo:orchestrator:daily-orders
+    type: Orchestrator
+    name: daily_orders
+    aliases: [daily_orders_flow]
+    attributes: {repository: retail-pipeline}
+  - id: urn:example:palgwae:demo:queue:orders-work
+    type: Queue
+    name: orders-work
+    attributes: {environment: local}
+  - id: urn:example:palgwae:demo:job:extract-orders
+    type: Job
+    name: extract_orders
+    attributes: {environment: local}
+  - id: urn:example:palgwae:demo:job:build-orders-daily
+    type: Job
+    name: build_orders_daily
+    attributes: {environment: local}
+  - id: urn:example:palgwae:demo:job:publish-orders
+    type: Job
+    name: publish_orders
+    attributes: {environment: local}
+  - id: urn:example:palgwae:demo:service:orders-api
+    type: Service
+    name: orders_api
+    attributes: {repository: retail-pipeline}
+  - id: urn:example:palgwae:demo:dataset:raw-orders
+    type: PhysicalDataset
+    name: object_store.raw_orders
+    aliases: [raw_orders]
+    attributes:
+      environment: local
+      platform: object_store
+      namespace: retail
+  - id: urn:example:palgwae:demo:dataset:orders-bronze
+    type: PhysicalDataset
+    name: lake.orders_bronze
+    aliases: [orders_bronze]
+    attributes:
+      environment: local
+      platform: lake
+      namespace: retail
+  - id: urn:example:palgwae:demo:dataset:orders-daily
+    type: PhysicalDataset
+    name: warehouse.orders_daily
+    aliases: [orders_daily]
+    attributes:
+      environment: local
+      platform: warehouse
+      namespace: retail
+  - id: urn:example:palgwae:demo:contract:orders-daily-ready-v1
+    type: MarkerContract
+    name: orders-daily-ready-v1
+    attributes:
+      producer: publish_orders
+      empty_result: valid
+      meaning: The daily partition has been published and may be served.
+
+claims:
+  - subject: urn:example:palgwae:demo:trigger:daily-orders-schedule
+    predicate: TRIGGERS
+    object: urn:example:palgwae:demo:orchestrator:daily-orders
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/pipeline.py, locator: "L9", source_type: CODE}
+  - subject: urn:example:palgwae:demo:orchestrator:daily-orders
+    predicate: STARTS
+    object: urn:example:palgwae:demo:job:extract-orders
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/pipeline.py, locator: "L10", source_type: CODE}
+  - subject: urn:example:palgwae:demo:orchestrator:daily-orders
+    predicate: ENQUEUES_TO
+    object: urn:example:palgwae:demo:queue:orders-work
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/pipeline.py, locator: "L10", source_type: CODE}
+  - subject: urn:example:palgwae:demo:job:extract-orders
+    predicate: CONSUMES
+    object: urn:example:palgwae:demo:queue:orders-work
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/pipeline.py, locator: "L10", source_type: CODE}
+  - subject: urn:example:palgwae:demo:job:extract-orders
+    predicate: NEXT
+    object: urn:example:palgwae:demo:job:build-orders-daily
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/pipeline.py, locator: "L11", source_type: CODE}
+  - subject: urn:example:palgwae:demo:job:build-orders-daily
+    predicate: NEXT
+    object: urn:example:palgwae:demo:job:publish-orders
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/pipeline.py, locator: "L12", source_type: CODE}
+  - subject: urn:example:palgwae:demo:job:extract-orders
+    predicate: READS_FROM
+    object: urn:example:palgwae:demo:dataset:raw-orders
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/pipeline.py, locator: "L16", source_type: CODE}
+  - subject: urn:example:palgwae:demo:job:extract-orders
+    predicate: WRITES_TO
+    object: urn:example:palgwae:demo:dataset:orders-bronze
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/pipeline.py, locator: "L17", source_type: CODE}
+  - subject: urn:example:palgwae:demo:job:build-orders-daily
+    predicate: READS_FROM
+    object: urn:example:palgwae:demo:dataset:orders-bronze
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/transform.sql, locator: "L6", source_type: SQL}
+  - subject: urn:example:palgwae:demo:job:build-orders-daily
+    predicate: WRITES_TO
+    object: urn:example:palgwae:demo:dataset:orders-daily
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/transform.sql, locator: "L1-L7", source_type: SQL}
+  - subject: urn:example:palgwae:demo:job:publish-orders
+    predicate: READS_FROM
+    object: urn:example:palgwae:demo:dataset:orders-daily
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/pipeline.py, locator: "L21", source_type: CODE}
+  - subject: urn:example:palgwae:demo:job:publish-orders
+    predicate: EMITS
+    object: urn:example:palgwae:demo:contract:orders-daily-ready-v1
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/pipeline.py, locator: "L22", source_type: CODE}
+      - {path: source/contracts.yaml, locator: "L1-L6", source_type: CONFIG}
+  - subject: urn:example:palgwae:demo:service:orders-api
+    predicate: REQUIRES
+    object: urn:example:palgwae:demo:contract:orders-daily-ready-v1
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/service.py, locator: "L8", source_type: CODE}
+      - {path: source/contracts.yaml, locator: "L1-L6", source_type: CONFIG}
+  - subject: urn:example:palgwae:demo:service:orders-api
+    predicate: READS_FROM
+    object: urn:example:palgwae:demo:dataset:orders-daily
+    assertion_kind: DECLARED
+    review_status: AUTO_VERIFIED
+    evidence:
+      - {path: source/service.py, locator: "L9", source_type: CODE}
+
+unresolved:
+  - source_node_id: urn:example:palgwae:demo:job:publish-orders
+    target_hint: notification_target
+    reason: The notification target is supplied dynamically at deployment time.
+    evidence:
+      - {path: source/contracts.yaml, locator: "L8-L11", source_type: CONFIG}

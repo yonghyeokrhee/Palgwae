@@ -1,0 +1,68 @@
+name: palgwae-default
+version: 1
+namespace_example: urn:example:palgwae:demo
+
+entity_types:
+  Repository:
+    group: Resource
+    identity: [name]
+  Environment:
+    group: Resource
+    identity: [name]
+  Orchestrator:
+    group: Resource
+    identity: [repository, name]
+  Task:
+    group: Resource
+    identity: [orchestrator, name]
+  Job:
+    group: Resource
+    identity: [environment, name]
+  Service:
+    group: Resource
+    identity: [repository, name]
+  Queue:
+    group: Resource
+    identity: [environment, name]
+  Trigger:
+    group: Resource
+    identity: [environment, kind, name]
+  LogicalDataset:
+    group: Data
+    identity: [domain, name]
+  PhysicalDataset:
+    group: Data
+    identity: [environment, platform, namespace, name]
+  Column:
+    group: Data
+    identity: [dataset, name]
+  DataContract:
+    group: Contract
+    identity: [domain, name]
+  MessageContract:
+    group: Contract
+    identity: [producer, consumer, name]
+  MarkerContract:
+    group: Contract
+    identity: [producer, name]
+  ArgumentContract:
+    group: Contract
+    identity: [producer, consumer, name]
+  Invariant:
+    group: Contract
+    identity: [domain, name]
+  SLA:
+    group: Contract
+    identity: [domain, name]
+  LifecycleAssertion:
+    group: Evolution
+    identity: [subject, environment, valid_from]
+  Decision:
+    group: Evolution
+    identity: [repository, name, date]
+  Migration:
+    group: Evolution
+    identity: [repository, name]
+  Incident:
+    group: Evolution
+    identity: [environment, name, date]

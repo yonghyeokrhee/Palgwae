@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/yonghyeokrhee/Palgwae/v0.1.0/ontology/schemas/node.schema.json",
+  "title": "Context graph node",
+  "type": "object",
+  "required": ["node_id", "node_type", "name"],
+  "properties": {
+    "node_id": {"type": "string", "minLength": 1},
+    "node_type": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "aliases": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "attributes": {"type": "object"}
+  },
+  "additionalProperties": false
+}

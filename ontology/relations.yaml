@@ -1,0 +1,110 @@
+name: palgwae-default
+version: 1
+
+relations:
+  CONTAINS:
+    category: structural
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: false
+  SCHEDULES:
+    category: control
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: true
+  TRIGGERS:
+    category: control
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: true
+  STARTS:
+    category: control
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: true
+  INVOKES:
+    category: control
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: true
+  ENQUEUES_TO:
+    category: control
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: true
+  CONSUMES:
+    category: control
+    syntax_direction: subject_to_object
+    dependency_direction: object_to_subject
+    include_in_lineage: true
+  NEXT:
+    category: control
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: true
+  WAITS_FOR:
+    category: control
+    syntax_direction: subject_to_object
+    dependency_direction: object_to_subject
+    include_in_lineage: true
+  READS_FROM:
+    category: data
+    syntax_direction: subject_to_object
+    dependency_direction: object_to_subject
+    include_in_lineage: true
+  WRITES_TO:
+    category: data
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: true
+  TRANSFORMS:
+    category: data
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: true
+  MATERIALIZES_AS:
+    category: data
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: true
+  EMITS:
+    category: contract
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: true
+  REQUIRES:
+    category: contract
+    syntax_direction: subject_to_object
+    dependency_direction: object_to_subject
+    include_in_lineage: true
+  GATED_BY:
+    category: contract
+    syntax_direction: subject_to_object
+    dependency_direction: object_to_subject
+    include_in_lineage: true
+  OWNED_BY:
+    category: ownership
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: false
+  DEPLOYED_IN:
+    category: deployment
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: false
+  REPLACES:
+    category: evolution
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: false
+  COEXISTS_WITH:
+    category: evolution
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: false
+    symmetric: true
+  VALIDATED_BY:
+    category: evolution
+    syntax_direction: subject_to_object
+    dependency_direction: subject_to_object
+    include_in_lineage: false

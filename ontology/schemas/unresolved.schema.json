@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/yonghyeokrhee/Palgwae/v0.1.0/ontology/schemas/unresolved.schema.json",
+  "title": "Unresolved graph boundary",
+  "type": "object",
+  "required": ["unresolved_id", "source_node_id", "reason", "evidence_ids"],
+  "properties": {
+    "unresolved_id": {"type": "string", "minLength": 1},
+    "source_node_id": {"type": "string", "minLength": 1},
+    "target_hint": {"type": ["string", "null"]},
+    "reason": {"type": "string", "minLength": 1},
+    "evidence_ids": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "attributes": {"type": "object"}
+  },
+  "additionalProperties": false
+}

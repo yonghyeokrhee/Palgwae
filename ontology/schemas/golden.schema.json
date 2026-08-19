@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/yonghyeokrhee/Palgwae/v0.1.0/ontology/schemas/golden.schema.json",
+  "title": "Golden graph questions",
+  "type": "object",
+  "required": ["version", "questions"],
+  "properties": {
+    "version": {"const": 1},
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "tool", "arguments", "expect"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "tool": {
+            "enum": [
+              "find_entity",
+              "get_upstream",
+              "get_downstream",
+              "find_dependency_path",
+              "assess_change_impact"
+            ]
+          },
+          "arguments": {"type": "object"},
+          "expect": {
+            "type": "object",
+            "required": ["status"],
+            "properties": {
+              "status": {"enum": ["ANSWERED", "UNKNOWN"]},
+              "contains_node_id": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

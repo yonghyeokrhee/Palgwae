@@ -1,0 +1,37 @@
+name: Adapter proposal
+description: Propose one source format that can emit Palgwae graph candidates.
+title: "[adapter] "
+labels: ["adapter", "help wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep the proposal narrow. Adapters emit candidates and evidence; they do not decide graph truth.
+  - type: input
+    id: source
+    attributes:
+      label: Source format
+      description: Example: dbt manifest v12, OpenLineage events, or Airflow serialized DAG.
+    validations:
+      required: true
+  - type: textarea
+    id: entities
+    attributes:
+      label: Entities and candidate relations
+      description: Which canonical entities and predicates could be emitted?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and trust boundary
+      description: What exact locator and revision can support each candidate? What remains dynamic?
+    validations:
+      required: true
+  - type: textarea
+    id: fixture
+    attributes:
+      label: Public or synthetic fixture
+      description: Link a redistributable sample, or describe the fixture you will create.
+    validations:
+      required: true
