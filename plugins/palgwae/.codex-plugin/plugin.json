@@ -1,0 +1,29 @@
+{
+  "name": "palgwae",
+  "version": "0.2.0",
+  "description": "Evidence-bounded data-pipeline dependency context for coding agents",
+  "author": {
+    "name": "yonghyeokrhee",
+    "email": "joshuaisland@gmail.com",
+    "url": "https://github.com/yonghyeokrhee"
+  },
+  "homepage": "https://github.com/yonghyeokrhee/Palgwae",
+  "repository": "https://github.com/yonghyeokrhee/Palgwae",
+  "license": "Apache-2.0",
+  "keywords": ["data-engineering", "lineage", "mcp", "context-graph"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Palgwae",
+    "shortDescription": "Trace provable pipeline dependencies",
+    "longDescription": "Resolve data-engineering entities, traverse accepted upstream and downstream relationships, assess change impact, and inspect pinned evidence through the Palgwae MCP server.",
+    "developerName": "yonghyeokrhee",
+    "category": "Developer Tools",
+    "capabilities": ["Read"],
+    "websiteURL": "https://github.com/yonghyeokrhee/Palgwae",
+    "defaultPrompt": [
+      "Use Palgwae to assess the downstream impact of this change.",
+      "Trace the accepted dependency path and show the evidence for each claim."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}

@@ -14,11 +14,15 @@ platform rewrite.
 ## Good first contributions
 
 - [x] inspect a bundle with a dependency-free static HTML view
+- [x] distribute the same MCP query contract to Codex, Claude Code, and OpenCode
+- [x] quarantine Graphify 0.9.46 as an optional code-only candidate extractor
 - [ ] ingest dbt `manifest.json` into candidates
 - [ ] ingest OpenLineage events into candidates
 - [ ] extract Airflow DAG/task scheduling
 - [ ] parse SQL table lineage with a pluggable parser
 - [ ] bind Terraform resources to scripts and environments
+- [ ] resolve Graphify candidates against an organization-owned canonical registry
+- [ ] add AST, SQL, and Terraform predicate-specific promotion verifiers
 - [ ] add GitHub Actions artifact publishing
 - [ ] document a second demo using Spark and Kafka
 

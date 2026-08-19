@@ -35,6 +35,8 @@ The project is deliberately small:
 - CLI and Model Context Protocol (MCP) access use the same graph bundle.
 
 No API key, embedding model, vector database, or cloud account is required.
+The optional Graphify adapter is build-time only and never enters the MCP
+runtime dependency set.
 
 > Status: early alpha. The first release proves the file contracts,
 > evidence rules, traversal behavior, and a generic retail-pipeline example.
@@ -161,6 +163,29 @@ Generic MCP client configuration:
 }
 ```
 
+Palgwae also ships thin distributions for
+[Codex, Claude Code, and OpenCode](docs/cross-agent-plugins.md). They all start
+the same stdio MCP server and apply the same evidence-bounded query contract;
+the client-specific files contain installation metadata and workflow guidance,
+not graph semantics.
+
+## Optional Graphify candidate extraction
+
+Graphify can expand candidate coverage across code repositories without
+becoming a source of accepted truth. Its dependency is isolated under
+`integrations/graphify` with a separate lockfile:
+
+```bash
+cd integrations/graphify
+uv sync --frozen
+uv run palgwae-graphify --help
+```
+
+The adapter always emits a candidate ledger with zero accepted claims.
+Canonical identity resolution and predicate-specific verification remain
+Palgwae responsibilities. See the
+[Graphify integration boundary](docs/graphify-integration.md).
+
 ## MCP tools
 
 The server is read-only:
@@ -205,6 +230,7 @@ Useful first contributions are small:
 - SQL table/column lineage;
 - Terraform resource bindings;
 - a candidate-claim review UI;
+- predicate-specific candidate promotion verifiers;
 - more Golden questions and negative tests.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) and

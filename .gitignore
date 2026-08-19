@@ -15,3 +15,5 @@ site/
 
 # Generated graph bundles are local by default.
 .palgwae/
+graphify-out/
+candidate-ledger/

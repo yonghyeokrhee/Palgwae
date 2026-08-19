@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "id": "pipeline",
+      "label": "pipeline.py",
+      "file_type": "code",
+      "source_file": "pipeline.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "extract_orders",
+      "label": "extract_orders()",
+      "file_type": "code",
+      "source_file": "pipeline.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "transform_orders",
+      "label": "transform_orders()",
+      "file_type": "code",
+      "source_file": "pipeline.py",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "external_table",
+      "label": "raw.orders",
+      "file_type": "unknown"
+    }
+  ],
+  "edges": [
+    {
+      "source": "pipeline",
+      "target": "transform_orders",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "pipeline.py",
+      "source_location": "L5"
+    },
+    {
+      "source": "transform_orders",
+      "target": "extract_orders",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "pipeline.py",
+      "source_location": "L6"
+    },
+    {
+      "source": "extract_orders",
+      "target": "external_table",
+      "relation": "mentions",
+      "confidence": "INFERRED"
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

@@ -1,0 +1,12 @@
+{
+  "name": "palgwae",
+  "version": "0.2.0",
+  "description": "Evidence-bounded data-pipeline dependency context for coding agents",
+  "author": {
+    "name": "yonghyeokrhee",
+    "email": "joshuaisland@gmail.com"
+  },
+  "homepage": "https://github.com/yonghyeokrhee/Palgwae",
+  "repository": "https://github.com/yonghyeokrhee/Palgwae",
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "palgwae": {
+      "type": "local",
+      "command": [
+        "palgwae",
+        "mcp",
+        "--bundle",
+        ".palgwae/bundle",
+        "--transport",
+        "stdio"
+      ]
+    }
+  },
+  "permission": {
+    "palgwae_*": "allow"
+  }
+}

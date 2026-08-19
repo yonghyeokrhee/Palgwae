@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "palgwae"
-version = "0.1.0"
+version = "0.2.0"
 description = "Palgwae: evidence-bounded context graphs for data engineering repositories and AI agents"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [
-  { name = "Palgwae contributors" },
+  { name = "yonghyeokrhee", email = "joshuaisland@gmail.com" },
 ]
 keywords = [
   "palgwae",

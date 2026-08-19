@@ -1,0 +1,4 @@
+include README.md
+recursive-include tests *.py *.json
+global-exclude *.py[cod]
+global-exclude __pycache__
