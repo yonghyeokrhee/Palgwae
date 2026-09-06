@@ -34,7 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--version",
         action="version",
-        version="palgwae 0.1.0",
+        version="palgwae 0.2.0",
     )
     commands = parser.add_subparsers(dest="command", required=True)
 

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "palgwae": {
+      "type": "stdio",
+      "command": "palgwae",
+      "args": [
+        "mcp",
+        "--bundle",
+        ".palgwae/bundle",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

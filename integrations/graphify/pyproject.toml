@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "palgwae-graphify"
+version = "0.2.0"
+description = "Optional Graphify candidate extractor for Palgwae"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [
+  { name = "yonghyeokrhee", email = "joshuaisland@gmail.com" },
+]
+dependencies = [
+  "graphifyy[sql,terraform]==0.9.46",
+]
+
+[project.scripts]
+palgwae-graphify = "palgwae_graphify.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
