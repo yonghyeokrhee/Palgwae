@@ -1,0 +1,47 @@
+name: Release artifacts
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.12"
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: uv sync --frozen
+      - run: uv run python scripts/check_release.py
+      - name: Match release tag to package
+        if: startsWith(github.ref, 'refs/tags/')
+        run: test "$GITHUB_REF_NAME" = "v$(uv run python -c 'from importlib.metadata import version; print(version("palgwae"))')"
+      - run: uv run python -m unittest discover -s tests -v
+      - run: uv run pip-audit --progress-spinner off
+      - run: uv run python -m build
+      - run: uv run twine check dist/*
+      - run: uv run python scripts/scan_distributions.py
+      - run: uv run --isolated --no-project --with ./dist/palgwae-0.3.0-py3-none-any.whl python scripts/smoke_installed.py
+      - run: uv run python scripts/prepare_npm.py
+      - run: npm pack ./distributions/npm --pack-destination dist
+      - run: node distributions/npm/bin/palgwae.mjs --version
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum *.whl *.tar.gz *.tgz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/*
+      - name: Publish GitHub prerelease
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --prerelease --generate-notes
+    permissions:
+      contents: write

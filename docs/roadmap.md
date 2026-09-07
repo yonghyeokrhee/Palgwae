@@ -18,15 +18,20 @@ platform rewrite.
 - [x] quarantine Graphify 0.9.46 as an optional code-only candidate extractor
 - [ ] ingest dbt `manifest.json` into candidates
 - [ ] ingest OpenLineage events into candidates
-- [ ] extract Airflow DAG/task scheduling
+- [x] extract literal Airflow DAG/tasks, basic TaskFlow, and declared dependency edges
 - [ ] parse SQL table lineage with a pluggable parser
 - [ ] bind Terraform resources to scripts and environments
 - [ ] resolve Graphify candidates against an organization-owned canonical registry
 - [ ] add AST, SQL, and Terraform predicate-specific promotion verifiers
-- [ ] add GitHub Actions artifact publishing
+- [x] add GitHub Actions artifact publishing and installed-wheel smoke checks
 - [ ] document a second demo using Spark and Kafka
 
 ## Later, only with evidence
+
+- expand Airflow TaskGroups and repeated TaskFlow calls with explicit compatibility tests;
+- verify against serialized DAG exports without scheduling production jobs;
+- opt-in authenticated ChatGPT hosting and public plugin-directory submission;
+- npm/PyPI registry publication after publisher accounts are configured;
 
 - column-level lineage;
 - bitemporal lifecycle snapshots;

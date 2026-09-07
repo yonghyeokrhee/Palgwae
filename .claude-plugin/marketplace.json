@@ -1,0 +1,8 @@
+{
+  "name": "palgwae",
+  "owner": {"name": "yonghyeokrhee"},
+  "metadata": {"description": "Evidence-backed data pipeline context"},
+  "plugins": [
+    {"name": "palgwae", "source": "./plugins/claude/palgwae", "description": "Trace declared Airflow dependencies with source evidence", "category": "development"}
+  ]
+}

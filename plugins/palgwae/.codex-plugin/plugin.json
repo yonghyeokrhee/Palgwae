@@ -1,6 +1,6 @@
 {
   "name": "palgwae",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Evidence-bounded data-pipeline dependency context for coding agents",
   "author": {
     "name": "yonghyeokrhee",
