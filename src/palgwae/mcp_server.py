@@ -26,7 +26,7 @@ def _mcp_imports() -> tuple[Any, Any]:
         from mcp.types import ToolAnnotations
     except ImportError as exc:
         raise RuntimeError(
-            "MCP support is not installed; install the project MCP extra"
+            "MCP support is not installed; reinstall Palgwae with its dependencies"
         ) from exc
     return FastMCP, ToolAnnotations
 

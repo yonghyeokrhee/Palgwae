@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "palgwae"
-version = "0.2.0"
+version = "0.3.0"
 description = "Palgwae: evidence-bounded context graphs for data engineering repositories and AI agents"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -43,3 +43,16 @@ palgwae = "palgwae.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[dependency-groups]
+dev = ["build>=1.2,<2", "twine>=6,<7", "ruff>=0.12,<1", "jsonschema>=4.23,<5", "pip-audit>=2.9,<3"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.setuptools.package-data]
+palgwae = ["resources/*.py"]

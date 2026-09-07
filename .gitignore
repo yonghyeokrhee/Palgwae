@@ -17,3 +17,6 @@ site/
 .palgwae/
 graphify-out/
 candidate-ledger/
+distributions/npm/vendor/
+distributions/npm/LICENSE
+node_modules/

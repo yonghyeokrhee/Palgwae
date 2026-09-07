@@ -1,0 +1,23 @@
+name: Bug report
+description: Report an installation, extraction, query, or client connection problem.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Palgwae version and operating system
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Use a synthetic DAG. Do not include credentials, private identifiers, or production bundles.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual results
+    validations:
+      required: true

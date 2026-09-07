@@ -1,0 +1,12 @@
+{
+  "name": "@yonghyeokrhee/palgwae",
+  "version": "0.3.0",
+  "description": "Evidence-backed Airflow context for developers and coding agents",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {"type": "git", "url": "git+https://github.com/yonghyeokrhee/Palgwae.git"},
+  "bin": {"palgwae": "bin/palgwae.mjs"},
+  "engines": {"node": ">=20"},
+  "files": ["bin", "vendor", "README.md", "LICENSE"],
+  "publishConfig": {"access": "public"}
+}
