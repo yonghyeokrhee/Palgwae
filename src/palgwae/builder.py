@@ -18,9 +18,8 @@ _LINE_LOCATOR = re.compile(r"^L([1-9][0-9]*)(?:-L?([1-9][0-9]*))?$")
 def load_spec(path: str | Path) -> dict[str, Any]:
     """Load a JSON or YAML graph specification.
 
-    JSON works with the Python standard library.  YAML support is intentionally
-    a thin optional adapter so the core bundle and query runtime stay
-    dependency-free.
+    JSON uses the standard library. YAML uses the declared PyYAML dependency;
+    neither format requires network access or a model call.
     """
 
     spec_path = Path(path).expanduser().resolve()
@@ -38,8 +37,7 @@ def load_spec(path: str | Path) -> dict[str, Any]:
             import yaml  # type: ignore[import-not-found]
         except ImportError as exc:
             raise BundleValidationError(
-                "YAML specs require PyYAML; install the project's build extra "
-                "or use a JSON spec"
+                "YAML specs require PyYAML; reinstall Palgwae or use a JSON spec"
             ) from exc
         try:
             value = yaml.safe_load(text)
