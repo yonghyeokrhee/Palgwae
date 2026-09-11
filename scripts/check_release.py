@@ -18,6 +18,7 @@ for name in (
     "SECURITY.md",
     "SUPPORT.md",
     "docs/installation.md",
+    "docs/workspaces.md",
     "docs/airflow.md",
     ".claude-plugin/marketplace.json",
 ):

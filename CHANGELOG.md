@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased — related-repository workspaces
+
+- Let `init` register local project names/paths interactively or via repeated
+  `--repo`, persist `.palgwae/workspace.yaml`, and build one combined bundle.
+- Add `rebuild`, per-repository source fingerprints and coverage, explicit
+  cross-repository Airflow sensor and AWS resource binding, and one MCP recipe.
+- Parse a bounded subset of Terraform declarations and selected environment
+  tfvars using python-hcl2; preserve unsupported expressions as unresolved.
+- Preserve legacy Airflow-only `init --source` and bundle schema 1. Bundle
+  reads remain independent of the original repositories and source adapters.
+- Reject ambiguous targets and unsupported explicit SDK/provider scopes;
+  describe shared deployment scope in the workspace guide.
+- Document source installation, workspace ownership, bundle privacy, one-MCP
+  agent setup, and verify the multi-repository path from an installed wheel.
+
 ## 0.3.0 — Airflow source ingestion (2026-09-07)
 
 - Extract declared Airflow DAGs, literal operator/sensor tasks, basic TaskFlow

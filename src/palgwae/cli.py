@@ -44,10 +44,20 @@ def build_parser() -> argparse.ArgumentParser:
     airflow.add_argument("--namespace", required=True, help="organization-controlled URI for graph identities")
     airflow.add_argument("--output", type=Path, default=Path(".palgwae/bundle"))
 
-    init = commands.add_parser("init", help="build an Airflow bundle and print local MCP setup")
-    init.add_argument("--source", type=Path, default=Path("dags"))
-    init.add_argument("--namespace", required=True)
-    init.add_argument("--output", type=Path, default=Path(".palgwae/bundle"))
+    init = commands.add_parser("init", help="analyze related local repositories and print MCP setup")
+    init.add_argument("--source", type=Path, help="legacy Airflow-only source directory")
+    init.add_argument("--namespace", help="organization-controlled URI for graph identities")
+    init.add_argument("--output", type=Path, help="bundle output directory")
+    init.add_argument(
+        "--repo", action="append", default=[], metavar="NAME[=PATH]",
+        help="related local project name or NAME=PATH; repeat for multiple repositories",
+    )
+    init.add_argument("--workspace", type=Path, help="build from an existing workspace YAML")
+    init.add_argument("--environment", help="environment label, for example prd, stg, or dev")
+
+    rebuild = commands.add_parser("rebuild", help="rebuild the graph for a saved repository workspace")
+    rebuild.add_argument("--workspace", type=Path, default=Path(".palgwae/workspace.yaml"))
+    rebuild.add_argument("--output", type=Path, help="override the workspace bundle output directory")
 
     sample = commands.add_parser("example", help="write a fictional Airflow source file for a first run")
     sample.add_argument("--output", type=Path, default=Path("palgwae-example"))
@@ -146,6 +156,44 @@ def _print_json(value: Any) -> None:
     )
 
 
+def _prompt(message: str) -> str:
+    # Keep stdout available for the structured build result.
+    print(message, end="", file=sys.stderr, flush=True)
+    try:
+        return input().strip()
+    except EOFError as exc:
+        raise ValueError("input ended; rerun init with --repo NAME=PATH --namespace URI") from exc
+
+
+def _init_workspace(args: argparse.Namespace) -> dict[str, Any]:
+    if args.workspace is not None:
+        if args.repo or args.namespace is not None or args.environment is not None:
+            raise ValueError("--workspace cannot be combined with --repo, --namespace, or --environment")
+        from .workspace import build_workspace
+
+        return build_workspace(args.workspace, args.output)
+
+    repositories = args.repo
+    namespace = args.namespace
+    if sys.stdin.isatty():
+        if not repositories:
+            entered = _prompt("Related project names or NAME=PATH (comma-separated) [.]: ")
+            repositories = [entry.strip() for entry in entered.split(",") if entry.strip()]
+        if namespace is None:
+            namespace = _prompt("Graph namespace URI (for example urn:example:platform): ")
+    elif namespace is None:
+        raise ValueError("noninteractive init requires --namespace URI; specify related projects with --repo NAME=PATH (repeatable)")
+    if not namespace or not namespace.strip():
+        raise ValueError("a graph namespace URI is required; use --namespace URI")
+
+    from .workspace import build_workspace, initialize_workspace
+
+    config = initialize_workspace(
+        Path.cwd(), repositories or ["."], namespace, args.environment
+    )
+    return build_workspace(config, args.output)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
@@ -159,13 +207,30 @@ def main(argv: Sequence[str] | None = None) -> int:
             _print_json({"created": str(target), "next": f"palgwae init --source {args.output} --namespace urn:example:palgwae:airflow"})
             return 0
 
+        if args.command == "init":
+            if args.source is not None:
+                if args.repo or args.workspace is not None or args.environment is not None:
+                    raise ValueError("--source cannot be combined with --repo, --workspace, or --environment")
+                if not args.namespace:
+                    raise ValueError("legacy --source mode requires --namespace URI")
+            else:
+                _print_json(_init_workspace(args))
+                return 0
+
+        if args.command == "rebuild":
+            from .workspace import build_workspace
+
+            _print_json(build_workspace(args.workspace, args.output))
+            return 0
+
         if args.command in {"airflow", "init"}:
             from .airflow import build_airflow
 
-            report = build_airflow(args.source, args.output, args.namespace)
+            output = args.output or Path(".palgwae/bundle")
+            report = build_airflow(args.source, output, args.namespace)
             if args.command == "init":
                 report["mcp_config"] = {"mcpServers": {"palgwae": {
-                    "command": "palgwae", "args": ["mcp", "--bundle", str(args.output.resolve()), "--transport", "stdio"]}}}
+                    "command": "palgwae", "args": ["mcp", "--bundle", str(output.resolve()), "--transport", "stdio"]}}}
                 report["next"] = "Install the Palgwae plugin in your project, or copy mcp_config into your client's MCP settings."
             _print_json(report)
             return 0

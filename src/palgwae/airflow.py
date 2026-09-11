@@ -6,6 +6,7 @@ import ast
 from dataclasses import dataclass, field
 from hashlib import sha256
 import json
+import warnings
 from pathlib import Path
 from urllib.parse import quote, urlsplit
 
@@ -26,6 +27,14 @@ RULES = {
     "set-dependency": "NEXT",
     "external-task": "WAITS_FOR",
 }
+RESOURCE_OPERATORS = {
+    "airflow.providers.amazon.aws.operators.glue.GlueJobOperator": (
+        "job_name", "aws_glue_job"
+    ),
+    "airflow.providers.amazon.aws.operators.lambda_function.LambdaInvokeFunctionOperator": (
+        "function_name", "aws_lambda_function"
+    ),
+}
 
 
 def _digest(value: object) -> str:
@@ -42,6 +51,29 @@ def _literal(value: ast.AST | None) -> str | None:
     return None
 
 
+def _aws_scope_safe(call: ast.Call) -> bool:
+    if any(item.arg is None for item in call.keywords):
+        return False
+    connection = _keyword(call, "aws_conn_id")
+    if connection is not None and _literal(connection) != "aws_default":
+        return False
+    scope_keys = {"region_name", "botocore_config", "endpoint_url"}
+    if any(_keyword(call, key) is not None for key in scope_keys):
+        return False
+    defaults = _keyword(call, "default_args")
+    if defaults is None:
+        return True
+    if not isinstance(defaults, ast.Dict):
+        return False
+    for key, value in zip(defaults.keys, defaults.values):
+        name = _literal(key)
+        if name is None or name in scope_keys:
+            return False
+        if name == "aws_conn_id" and _literal(value) != "aws_default":
+            return False
+    return True
+
+
 @dataclass
 class Extraction:
     """Candidates are separate from predicate-specific promotion."""
@@ -55,6 +87,7 @@ class Extraction:
     dags: dict[str, str] = field(default_factory=dict)
     tasks: dict[tuple[str, str], str] = field(default_factory=dict)
     sensors: list[tuple[str, str | None, str | None, str]] = field(default_factory=list)
+    resource_references: list[dict] = field(default_factory=list)
     files: int = 0
     airflow_files: int = 0
 
@@ -141,6 +174,8 @@ class Extraction:
             claims[claim.claim_id] = claim
         used = {e for c in claims.values() for e in c.evidence_ids} | {
             e for u in self.unresolved for e in u.evidence_ids
+        } | {
+            e for reference in self.resource_references for e in reference["evidence_ids"]
         }
         return GraphBundle(
             nodes=tuple(self.nodes.values()),
@@ -158,6 +193,7 @@ class Source:
         self.factories: dict[str, tuple[ast.FunctionDef, ast.expr]] = {}
         self.task_functions: dict[str, str] = {}
         self.dag_bindings: dict[str, str] = {}
+        self.dag_aws_scopes: dict[str, tuple[bool, str]] = {}
         self.called: set[str] = set()
         self.call_cache: dict[int, list[str]] = {}
         self.active_dag: str | None = None
@@ -213,7 +249,10 @@ class Source:
             if _literal(schedule):
                 attributes["schedule"] = _literal(schedule)
         self.result.nodes[identity] = Node(identity, "Orchestrator", name, attributes=attributes)
-        self.evidence(call)
+        self.dag_aws_scopes[identity] = (
+            _aws_scope_safe(call) if isinstance(call, ast.Call) else True,
+            self.evidence(call),
+        )
         return identity
 
     def make_task(
@@ -253,6 +292,35 @@ class Source:
                     evidence,
                 )
             )
+        if operator in RESOURCE_OPERATORS:
+            argument, target_kind = RESOURCE_OPERATORS[operator]
+            target_name = _literal(_keyword(call, argument))
+            dag_scope_safe, dag_evidence = self.dag_aws_scopes[dag]
+            if not _aws_scope_safe(call) or not dag_scope_safe:
+                self.result.gap(
+                    identity,
+                    evidence,
+                    "Airflow AWS connection or region scope, including inherited defaults, cannot be resolved; "
+                    "no resource target was inferred.",
+                )
+            elif target_name is None:
+                self.result.gap(
+                    identity,
+                    evidence,
+                    f"{operator.rsplit('.', 1)[-1]} {argument} is absent or dynamic; "
+                    "no resource target was inferred.",
+                )
+            else:
+                self.result.resource_references.append(
+                    {
+                        "subject": identity,
+                        "predicate": "STARTS",
+                        "target_kind": target_kind,
+                        "target_name": target_name,
+                        "evidence_ids": [evidence, dag_evidence],
+                        "environment": None,
+                    }
+                )
         return [identity]
 
     def connect(self, left: list[str], right: list[str], node: ast.AST, rule: str) -> None:
@@ -370,8 +438,14 @@ class Source:
     def statements(self, statements: list[ast.stmt]) -> None:
         for node in statements:
             if isinstance(node, ast.ImportFrom):
+                if any(item.name == "*" for item in node.names):
+                    self.imports.clear()
+                    self.gap(node, "Wildcard imports may shadow Airflow bindings; named imports must re-establish them.")
+                    continue
                 for item in node.names:
-                    self.imports[item.asname or item.name] = (node.module or "") + "." + item.name
+                    self.imports[item.asname or item.name] = (
+                        "." * node.level + (node.module or "") + "." + item.name
+                    )
             elif isinstance(node, ast.Import):
                 for item in node.names:
                     self.imports[item.asname or item.name.split(".")[0]] = (
@@ -477,7 +551,9 @@ def extract_airflow(source: str | Path, namespace: str) -> Extraction:
     for path, data in files:
         parser = Source(result, path, data)
         try:
-            tree = ast.parse(data, filename=path)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", SyntaxWarning)
+                tree = ast.parse(data, filename=path)
         except (SyntaxError, UnicodeError):
             marker = ast.Constant(value=None, lineno=1, end_lineno=max(1, len(data.splitlines())))
             parser.gap(

@@ -1,27 +1,57 @@
 # Palgwae
 
-**Trace Airflow change impact. Show the evidence. Keep unknowns explicit.**
+**Build shared pipeline context across repositories. Show the evidence. Keep unknowns explicit.**
 
-Palgwae gives developers and coding agents a local graph of declared pipeline
-dependencies. Ask what follows a task, which DAG waits on it, and where each
+Palgwae gives developers and coding agents one local graph of declared pipeline
+dependencies spread across related repositories. Ask which task starts a job,
+which DAG waits on another repository, what a change can affect, and where each
 relationship is written in source.
 
-It reads Airflow Python files without importing DAGs or running jobs. Queries
-use a portable JSONL snapshot, with no required database, API key, or model call.
-Connect the same read-only MCP server to Claude Code, Codex, or another MCP
-client.
+```text
+pipeline repo ─┐
+airflow repo  ─┼─> palgwae init ─> portable evidence bundle ─> one MCP ─> agents
+backend repo  ─┘
+```
 
-> Early alpha, 0.3.0. Supports a documented subset of classic Airflow and
-> TaskFlow control flow. It does not prove that tasks ran or infer dataset
-> lineage from arbitrary Python. [Supported patterns and limits](docs/airflow.md).
+Extraction is static: Palgwae does not import DAGs, execute repository code,
+contact cloud services, or require a model/API key. The development workspace
+adapter combines supported Airflow control flow, Terraform AWS declarations,
+and literal Python AWS SDK calls. Unsupported or ambiguous relationships stay
+explicitly unresolved.
 
-## Try it
+## Quickstart: related repositories
+
+Multi-repository init is available in the current development source and is not
+part of the published v0.3.0 wheel. First follow the
+[source installation](docs/installation.md#current-source-multi-repository-workspaces),
+then run this in the project that will own the generated bundle:
+
+```sh
+palgwae init --repo pipeline=. --repo airflow=../airflow --repo backend=../backend \
+  --namespace urn:myteam:data-platform --environment prd
+palgwae doctor --bundle .palgwae/bundle
+palgwae mcp --bundle .palgwae/bundle --transport stdio
+
+# After source changes:
+palgwae rebuild
+```
+
+Interactive `palgwae init` asks for the same project names and paths. It saves
+the selection in `.palgwae/workspace.yaml`, builds one bundle, and prints one
+MCP configuration for all registered repositories. See the complete
+[workspace guide](docs/workspaces.md) and [agent setup](docs/cross-agent-plugins.md).
+
+Coverage is reported per repository. Registering a backend does not mean its
+Java, SQL, dynamic configuration, or runtime behavior was understood.
+`doctor: PASS` proves bundle integrity, not graph completeness.
+
+## Stable v0.3.0: Airflow quickstart
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then
 install a [release wheel](https://github.com/yonghyeokrhee/Palgwae/releases).
-The [installation guide](docs/installation.md) also covers pnpm, Bun, npm,
-and source checkouts. PyPI and npm registry publication are separate channels
-and are not currently advertised as available.
+The [installation guide](docs/installation.md) also covers source checkouts,
+pnpm, Bun, and npm. PyPI and npm registry publication are separate channels and
+are not currently advertised as available.
 
 ```sh
 palgwae example
@@ -39,18 +69,21 @@ daily_orders.publish -> reporting.wait_for_orders -> reporting.report
 Results contain accepted claims and source evidence. `UNKNOWN` means a
 relationship was not proven, not that it cannot exist.
 
-For your repository:
+For a single Airflow repository:
 
 ```sh
 palgwae init --source ./dags --namespace https://example.org/engineering/pipelines
 ```
 
 Use a namespace your organization controls. `init` writes the graph and prints
-MCP setup; it does not change your agent settings. After source changes, rebuild
-the bundle and restart MCP. `doctor` checks snapshot integrity, not live source
-freshness.
+MCP setup; it does not change your agent settings. Restart MCP after rebuilding
+because the process serves an immutable bundle snapshot.
 
-## Install the plugin
+## Connect an agent plugin
+
+The plugin teaches the agent how to query Palgwae and supplies an MCP launch
+recipe. It does not install the Python CLI or build a graph; complete the CLI
+installation and `init` first.
 
 With the CLI installed and a bundle in your project, in Claude Code:
 

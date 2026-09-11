@@ -13,6 +13,11 @@ platform rewrite.
 
 ## Good first contributions
 
+- [x] register related local repositories and build one context bundle (unreleased)
+- [x] resolve explicit cross-repo Airflow sensors and supported literal AWS resource references (unreleased)
+- [ ] expand shared-workspace extraction to backend languages, SQL data flow, and marker contracts
+- [ ] resolve AWS account, region, provider, and Airflow connection scopes explicitly
+
 - [x] inspect a bundle with a dependency-free static HTML view
 - [x] distribute the same MCP query contract to Codex, Claude Code, and OpenCode
 - [x] quarantine Graphify 0.9.46 as an optional code-only candidate extractor

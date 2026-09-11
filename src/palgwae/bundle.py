@@ -692,6 +692,8 @@ class GraphBundle:
             "bundle_digest": self.bundle_digest,
             "manifest_digest": self.manifest_digest,
             "ontology": dict(self.manifest.get("ontology") or {}),
+            "sources": list(self.manifest.get("sources") or []),
+            "build": dict(self.manifest.get("build") or {}),
             "counts": counts,
             "files": {
                 name: {"sha256": f"sha256:{digest}"}

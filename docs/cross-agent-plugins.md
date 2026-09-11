@@ -4,6 +4,15 @@ Install the [CLI](installation.md), then run `palgwae init` in your repository.
 The default bundle is `.palgwae/bundle`. The executable must be on the host's
 PATH; restart desktop hosts after installing it.
 
+For the development version's [multi-repository init](workspaces.md), register
+the related repositories once in the owner project. The resulting bundle
+contains their combined graph, so connect a single MCP server rather than one
+per repository. Copy the local `mcp_config` printed by init if the host launches
+from a different directory or another Palgwae version is on PATH. That recipe
+pins the Python installation used for the build; keep machine-specific paths
+in local client settings. `graph_health` reports per-project coverage in
+`build.coverage`. Rebuild and restart the MCP process after source changes.
+
 ## Claude Code
 
 ```text
