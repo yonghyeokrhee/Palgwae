@@ -15,6 +15,22 @@ spec.loader.exec_module(launcher)
 
 
 class PluginLauncherTest(unittest.TestCase):
+    def test_windows_launcher_waits_for_the_runtime_exit(self):
+        with (
+            patch.object(launcher.sys, "platform", "win32"),
+            patch.object(launcher, "owner_root", return_value=ROOT),
+            patch.object(launcher.shutil, "which", return_value="uv"),
+            patch.object(launcher.subprocess, "run") as run,
+            patch.object(launcher.os, "execvpe") as replace,
+            patch.object(launcher.os, "chdir") as chdir,
+        ):
+            run.return_value.returncode = 7
+            self.assertEqual(launcher.main(), 7)
+            run.assert_called_once()
+            self.assertEqual(run.call_args.kwargs["cwd"], ROOT)
+            replace.assert_not_called()
+            chdir.assert_not_called()
+
     def test_explicit_owner_overrides_host_cwd(self):
         with tempfile.TemporaryDirectory() as owner:
             with patch.dict(os.environ, {"PALGWAE_PROJECT_ROOT": owner}):

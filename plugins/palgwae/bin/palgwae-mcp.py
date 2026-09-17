@@ -71,9 +71,14 @@ def main() -> int:
     environment["UV_PROJECT_ENVIRONMENT"] = str(cache / "palgwae" / "plugin-runtime-0.3.0")
     # Load this plugin's exact source, even if another Palgwae is installed.
     environment["PYTHONPATH"] = str(runtime / "src")
+    command = [uv, "run", "--quiet", "--frozen", "--project", str(runtime),
+               "--", "python", "-m", "palgwae", *sys.argv[1:]]
+    if sys.platform == "win32":
+        # Windows exec spawns and exits instead of replacing this process.
+        # Keep the launcher alive so the MCP client waits for the whole chain.
+        return subprocess.run(command, cwd=owner, env=environment).returncode
     os.chdir(owner)
-    os.execvpe(uv, [uv, "run", "--quiet", "--frozen", "--project", str(runtime),
-                   "--", "python", "-m", "palgwae", *sys.argv[1:]], environment)
+    os.execvpe(uv, command, environment)
     return 0
 
 
