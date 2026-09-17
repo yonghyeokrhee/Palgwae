@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import unittest
 
-from palgwae.bootstrap import bootstrap_project, discover_project_spec
+from palgwae.bootstrap import _bootstrap_lock, bootstrap_project, discover_project_spec
 from palgwae.bundle import BundleValidationError, GraphBundle
 
 
@@ -98,6 +98,15 @@ class ProjectBootstrapTest(unittest.TestCase):
         self.assertEqual(
             len({result["bundle_digest"] for result in results}), 1
         )
+
+    def test_bootstrap_lock_does_not_initialize_the_locked_byte(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "bundle"
+            with _bootstrap_lock(output):
+                pass
+            self.assertEqual(
+                (output.parent / ".bundle.bootstrap.lock").read_bytes(), b""
+            )
 
     def test_partial_bundle_is_not_overwritten(self):
         with tempfile.TemporaryDirectory() as temporary:

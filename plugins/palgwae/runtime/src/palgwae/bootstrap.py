@@ -112,10 +112,8 @@ def _bootstrap_lock(output_path: Path):
         if os.name == "nt":  # pragma: no cover - exercised by Windows CI.
             import msvcrt
 
-            lock_file.seek(0)
-            if lock_file.read(1) == b"":
-                lock_file.write(b"0")
-                lock_file.flush()
+            # Windows allows locking past EOF. Do not read or initialize the
+            # byte first: another bootstrap may already hold an exclusive lock.
             lock_file.seek(0)
             msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
             try:
