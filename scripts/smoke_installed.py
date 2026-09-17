@@ -45,12 +45,12 @@ with tempfile.TemporaryDirectory() as directory:
             await session.initialize()
             tools = await session.list_tools()
             assert len(tools.tools) == 7
-            assert all(tool.annotations.readOnlyHint for tool in tools.tools)
+            assert all(tool.annotations.read_only_hint for tool in tools.tools)
             response = await session.call_tool(
                 "get_downstream", {"node_id": "urn:example:palgwae:smoke/task/daily_orders/extract"}
             )
-            assert not response.isError
-            assert response.structuredContent["status"] == "ANSWERED"
+            assert not response.is_error
+            assert response.structured_content["status"] == "ANSWERED"
 
     anyio.run(scenario)
 print("Installed wheel: example, Airflow ingestion, cross-DAG traversal and MCP passed")
