@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 import anyio
-import httpx
+import httpx2 as httpx
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
@@ -56,12 +56,12 @@ class HttpMcpTest(unittest.TestCase):
                                 time.sleep(0.1)
 
                     async def scenario():
-                        async with streamable_http_client(base + "/mcp/") as (reader, writer, _):
+                        async with streamable_http_client(base + "/mcp/") as (reader, writer):
                             async with ClientSession(reader, writer) as session:
                                 await session.initialize()
                                 result = await session.call_tool("graph_health", {})
-                                self.assertFalse(result.isError)
-                                self.assertEqual(result.structuredContent["status"], "PASS")
+                                self.assertFalse(result.is_error)
+                                self.assertEqual(result.structured_content["status"], "PASS")
 
                     anyio.run(scenario)
                 finally:

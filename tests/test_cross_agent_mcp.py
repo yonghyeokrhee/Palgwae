@@ -61,7 +61,7 @@ class CrossAgentMcpTest(unittest.TestCase):
                     async with ClientSession(*streams) as session:
                         initialized = await session.initialize()
                         health = await session.call_tool("graph_health", {})
-                        return initialized.serverInfo.name, health.structuredContent
+                        return initialized.server_info.name, health.structured_content
 
             server_name, health = anyio.run(scenario)
 
@@ -90,10 +90,10 @@ class CrossAgentMcpTest(unittest.TestCase):
                             "find_entity", {"query": "orders_daily"}
                         )
                         return {
-                            "server": initialized.serverInfo.name,
+                            "server": initialized.server_info.name,
                             "tools": sorted(tool.name for tool in tools.tools),
-                            "health": health.structuredContent,
-                            "found": found.structuredContent,
+                            "health": health.structured_content,
+                            "found": found.structured_content,
                         }
 
             async def scenario():

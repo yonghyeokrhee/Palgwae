@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import tomllib
 import unittest
 
 
@@ -104,6 +105,14 @@ class ClientDistributionTest(unittest.TestCase):
                 (canonical / name).read_bytes(),
                 f"bundled runtime is stale: {name}",
             )
+
+    def test_bundled_runtime_dependencies_match_the_root_package(self):
+        root = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+        bundled = tomllib.loads(
+            (ROOT / "plugins/palgwae/runtime/pyproject.toml").read_text()
+        )["project"]
+        self.assertEqual(bundled["version"], root["version"])
+        self.assertEqual(sorted(bundled["dependencies"]), sorted(root["dependencies"]))
 
     def test_owner_resolver_accepts_codex_cd_forms_only_for_directories(self):
         resolver_path = (
