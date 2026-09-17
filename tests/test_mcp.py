@@ -48,7 +48,7 @@ class McpContractTest(unittest.TestCase):
                     async with ClientSession(read_stream, write_stream) as session:
                         initialized = await session.initialize()
                         self.assertEqual(
-                            initialized.serverInfo.name, "palgwae"
+                            initialized.server_info.name, "palgwae"
                         )
                         tools = await session.list_tools()
                         health = await session.call_tool("graph_health", {})
@@ -92,7 +92,7 @@ class McpContractTest(unittest.TestCase):
                                 "max_hops": 8,
                             },
                         )
-                        claim_id = dependency_path.structuredContent[
+                        claim_id = dependency_path.structured_content[
                             "paths"
                         ][0]["claim_ids"][0]
                         claim_evidence = await session.call_tool(
@@ -124,18 +124,18 @@ class McpContractTest(unittest.TestCase):
                         self.assertEqual(
                             {tool.name for tool in tools.tools}, expected
                         )
-                        self.assertFalse(health.isError)
+                        self.assertFalse(health.is_error)
                         self.assertNotIn(
-                            "bundle_dir", health.structuredContent
+                            "bundle_dir", health.structured_content
                         )
                         self.assertEqual(
-                            health.structuredContent["status"], "PASS"
+                            health.structured_content["status"], "PASS"
                         )
                         self.assertEqual(
-                            missing.structuredContent["status"], "UNKNOWN"
+                            missing.structured_content["status"], "UNKNOWN"
                         )
                         self.assertEqual(
-                            impact.structuredContent["status"], "ANSWERED"
+                            impact.structured_content["status"], "ANSWERED"
                         )
                         for result in (
                             upstream,
@@ -143,13 +143,13 @@ class McpContractTest(unittest.TestCase):
                             dependency_path,
                             claim_evidence,
                         ):
-                            self.assertFalse(result.isError)
+                            self.assertFalse(result.is_error)
                             self.assertEqual(
-                                result.structuredContent["status"],
+                                result.structured_content["status"],
                                 "ANSWERED",
                             )
-                        self.assertTrue(invalid_node.isError)
-                        self.assertTrue(invalid_hops.isError)
+                        self.assertTrue(invalid_node.is_error)
+                        self.assertTrue(invalid_hops.is_error)
 
             anyio.run(scenario)
 

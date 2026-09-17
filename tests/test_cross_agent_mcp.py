@@ -57,10 +57,10 @@ class CrossAgentMcpTest(unittest.TestCase):
                             "find_entity", {"query": "orders_daily"}
                         )
                         return {
-                            "server": initialized.serverInfo.name,
+                            "server": initialized.server_info.name,
                             "tools": sorted(tool.name for tool in tools.tools),
-                            "health": health.structuredContent,
-                            "found": found.structuredContent,
+                            "health": health.structured_content,
+                            "found": found.structured_content,
                         }
 
             async def scenario():

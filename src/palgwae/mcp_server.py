@@ -22,31 +22,29 @@ MCP_INSTRUCTIONS = (
 
 def _mcp_imports() -> tuple[Any, Any]:
     try:
-        from mcp.server.fastmcp import FastMCP
+        from mcp.server import MCPServer
         from mcp.types import ToolAnnotations
     except ImportError as exc:
         raise RuntimeError(
             "MCP support is not installed; reinstall Palgwae with its dependencies"
         ) from exc
-    return FastMCP, ToolAnnotations
+    return MCPServer, ToolAnnotations
 
 
 def create_mcp(bundle_path: str | Path) -> Any:
-    """Create a FastMCP server without importing MCP in the core runtime."""
+    """Create an MCP server without importing MCP in the core runtime."""
 
-    FastMCP, ToolAnnotations = _mcp_imports()
+    MCPServer, ToolAnnotations = _mcp_imports()
     graph = ContextGraph(GraphBundle.load(bundle_path))
     read_only = ToolAnnotations(
-        readOnlyHint=True,
-        destructiveHint=False,
-        idempotentHint=True,
-        openWorldHint=False,
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
     )
-    mcp = FastMCP(
+    mcp = MCPServer(
         "palgwae",
         instructions=MCP_INSTRUCTIONS,
-        streamable_http_path="/",
-        json_response=True,
     )
 
     @mcp.tool(annotations=read_only, structured_output=True)
@@ -150,7 +148,9 @@ def create_http_app(bundle_path: str | Path) -> Any:
 
     app = Starlette(
         routes=[
-            Mount("/mcp", app=mcp.streamable_http_app()),
+            Mount("/mcp", app=mcp.streamable_http_app(
+                streamable_http_path="/", json_response=True,
+            )),
             Route("/api/health", health),
             Route("/", root),
         ],
