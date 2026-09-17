@@ -45,7 +45,7 @@ palgwae = "palgwae.cli:main"
 where = ["src"]
 
 [dependency-groups]
-dev = ["build>=1.2,<2", "twine>=6,<7", "ruff>=0.12,<1", "jsonschema>=4.23,<5", "pip-audit>=2.9,<3"]
+dev = ["build>=1.2,<2", "twine>=6,<8", "ruff>=0.12,<1", "jsonschema>=4.23,<5", "pip-audit>=2.9,<3"]
 
 [tool.ruff]
 target-version = "py311"
