@@ -4,20 +4,23 @@
   <img src="assets/branding/palgwae-logo-v4.png" alt="Palgwae — eight trigrams expressing complex relationships through simple forms" width="640">
 </p>
 
-**Trace Airflow change impact. Show the evidence. Keep unknowns explicit.**
+**Understand data relationships and change impact. Show the evidence. Keep unknowns explicit.**
 
-Palgwae gives developers and coding agents a local graph of declared pipeline
-dependencies. Ask what follows a task, which DAG waits on it, and where each
-relationship is written in source.
+Palgwae is an evidence-backed context graph for data engineers and coding agents.
+It is designed to make relationships among repositories, jobs, tables, services,
+and contracts explicit, so engineers and agents can reason about dependencies,
+lineage, and the consequences of change over time.
 
-It reads Airflow Python files without importing DAGs or running jobs. Queries
-use a portable JSONL snapshot, with no required database, API key, or model call.
+Queries use a portable JSONL snapshot, with no required database, API key, or model call.
 Connect the same read-only MCP server to Claude Code, Codex, or another MCP
 client.
 
-> Early alpha, 0.3.0. Supports a documented subset of classic Airflow and
-> TaskFlow control flow. It does not prove that tasks ran or infer dataset
-> lineage from arbitrary Python. [Supported patterns and limits](docs/airflow.md).
+> Early alpha, 0.3.0. The current release supports a generic YAML-defined graph
+> and source extraction for a documented subset of Airflow, without importing
+> DAGs or running jobs. Airflow is an adapter, not the project boundary.
+> Automatic cross-repository discovery, arbitrary-code table lineage, and full
+> historical queries are not implemented.
+> [Supported Airflow patterns and limits](docs/airflow.md).
 
 ### The idea behind the name
 
