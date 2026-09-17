@@ -10,10 +10,10 @@ accepted bundle -> Palgwae MCP -> Codex
                               -> OpenCode
 ```
 
-## Prerequisites
+## Shared prerequisites
 
-The current project must make the `palgwae` executable available on `PATH` and
-build its accepted bundle at `.palgwae/bundle`:
+Claude Code and OpenCode currently require the `palgwae` executable on `PATH`.
+They also require an accepted bundle at `.palgwae/bundle`:
 
 ```bash
 palgwae build path/to/context-graph.yaml --output .palgwae/bundle
@@ -26,9 +26,18 @@ machine-specific absolute paths.
 
 ## Codex
 
-The Codex distribution lives under `plugins/palgwae`. It bundles a
-read-only MCP server declaration and a `trace-pipeline` skill. Validate it with
-the OpenAI plugin validator before publishing it to a marketplace.
+The Codex distribution lives under `plugins/palgwae`. It bundles the Python
+runtime, a launcher, the MCP server declaration, and a `trace-pipeline` skill.
+Only `uv` is required on the host; a global `palgwae` installation is not.
+Validate the plugin with the OpenAI plugin validator before publishing it to a
+marketplace.
+
+Codex starts the launcher from the installed plugin root. The launcher restores
+the inherited owner repository (with parent-process lookup as a fallback)
+before resolving the project-relative bundle. `PALGWAE_PROJECT_ROOT` is an
+explicit override for hosts that do not preserve the owner directory or expose
+their parent working directory. Codex CLI `--cd`/`-C` is resolved from the
+parent argv; `/proc` and `lsof` cover ordinary current-directory launches.
 
 For source-checkout testing, add this repository as a Codex marketplace and
 install the plugin:
@@ -40,6 +49,26 @@ codex plugin add palgwae@palgwae
 
 The marketplace entry is `.agents/plugins/marketplace.json`. Installation does
 not bypass the user's MCP or tool-approval policy.
+
+On the first MCP start, the launcher initializes `.palgwae/bundle` in the
+current owner repository:
+
+- a root `palgwae-context-graph.yaml`, `.yml`, or `.json` is compiled when
+  present (`.palgwae/context-graph.yaml`, `.yml`, or `.json` is also discovered);
+- otherwise a fail-closed starter is written with one repository node, no
+  accepted claims, and one unresolved extraction boundary;
+- an existing bundle is hash-validated and never silently replaced;
+- concurrent first starts are serialized by a project-local bootstrap lock;
+- a partial or non-empty bundle directory is preserved and startup fails with
+  an actionable error.
+
+The bootstrap write is why the plugin declares both Read and Write capability,
+even though all seven MCP tools remain read-only. To initialize explicitly
+outside Codex, run:
+
+```bash
+palgwae bootstrap --project-root . --output .palgwae/bundle
+```
 
 ## Claude Code
 

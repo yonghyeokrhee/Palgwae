@@ -1,0 +1,41 @@
+#!/bin/sh
+set -eu
+
+plugin_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+runtime_project="$plugin_root/runtime"
+cache_root=${XDG_CACHE_HOME:-${HOME:-/tmp}/.cache}
+UV_PROJECT_ENVIRONMENT="$cache_root/palgwae/plugin-runtime-0.2.0"
+export UV_PROJECT_ENVIRONMENT
+PYTHONPATH="$runtime_project/src${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH
+
+owner_root=${PALGWAE_PROJECT_ROOT:-}
+if [ -z "$owner_root" ] && [ -n "${OLDPWD:-}" ] && [ -d "$OLDPWD" ]; then
+  case "$OLDPWD" in
+    "$plugin_root"|"$plugin_root"/*) ;;
+    *) owner_root=$OLDPWD ;;
+  esac
+fi
+if [ -z "$owner_root" ] && command -v python3 >/dev/null 2>&1; then
+  owner_root=$(python3 "$plugin_root/bin/resolve-owner-root.py" "$PPID" 2>/dev/null || true)
+fi
+if [ -z "$owner_root" ] && [ -e "/proc/$PPID/cwd" ]; then
+  owner_root=$(readlink "/proc/$PPID/cwd" 2>/dev/null || true)
+fi
+if [ -z "$owner_root" ] && command -v lsof >/dev/null 2>&1; then
+  owner_root=$(lsof -a -p "$PPID" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | sed -n '1p')
+fi
+if [ -z "$owner_root" ] || [ ! -d "$owner_root" ]; then
+  echo "palgwae plugin: cannot determine the owner project root" >&2
+  echo "Set PALGWAE_PROJECT_ROOT to the repository directory." >&2
+  exit 2
+fi
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "palgwae plugin: uv is required to start the bundled runtime" >&2
+  echo "Install uv from https://docs.astral.sh/uv/ and start a new Codex session." >&2
+  exit 127
+fi
+
+cd "$owner_root"
+exec uv run --quiet --frozen --project "$runtime_project" -- python -m palgwae "$@"
