@@ -16,6 +16,7 @@ platform rewrite.
 - [x] inspect a bundle with a dependency-free static HTML view
 - [x] distribute the same MCP query contract to Codex, Claude Code, and OpenCode
 - [x] quarantine Graphify 0.9.46 as an optional code-only candidate extractor
+- [x] ship a self-contained Codex runtime with fail-closed project bootstrap
 - [ ] ingest dbt `manifest.json` into candidates
 - [ ] ingest OpenLineage events into candidates
 - [x] extract literal Airflow DAG/tasks, basic TaskFlow, and declared dependency edges

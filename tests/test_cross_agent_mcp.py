@@ -18,8 +18,9 @@ SPEC = ROOT / "examples" / "retail_pipeline" / "context-graph.yaml"
 
 
 def _client_commands() -> dict[str, tuple[str, list[str]]]:
+    codex_plugin = ROOT / "plugins" / "palgwae"
     codex = json.loads(
-        (ROOT / "plugins" / "palgwae" / ".mcp.json").read_text()
+        (codex_plugin / ".mcp.json").read_text()
     )["mcpServers"]["palgwae"]
     claude = json.loads(
         (ROOT / "plugins" / "claude" / "palgwae" / ".mcp.json").read_text()
@@ -28,13 +29,45 @@ def _client_commands() -> dict[str, tuple[str, list[str]]]:
         (ROOT / "clients" / "opencode" / "opencode.json").read_text()
     )["mcp"]["palgwae"]["command"]
     return {
-        "codex": (codex["command"], codex["args"]),
+        "codex": (
+            codex["command"],
+            [str(codex_plugin / arg.removeprefix("./"))
+             if arg.startswith("./bin/") else arg for arg in codex["args"]],
+        ),
         "claude": (claude["command"], claude["args"]),
         "opencode": (opencode[0], opencode[1:]),
     }
 
 
 class CrossAgentMcpTest(unittest.TestCase):
+    def test_codex_bundled_runtime_starts_and_answers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle = Path(temporary) / "bundle"
+            build_bundle(SPEC, bundle)
+            command, configured_args = _client_commands()["codex"]
+            args = [
+                str(bundle) if item == ".palgwae/bundle" else item
+                for item in configured_args
+            ]
+
+            async def scenario():
+                parameters = StdioServerParameters(
+                    command=command,
+                    args=args,
+                    cwd=ROOT,
+                    env={**os.environ, "PALGWAE_PROJECT_ROOT": temporary},
+                )
+                async with stdio_client(parameters) as streams:
+                    async with ClientSession(*streams) as session:
+                        initialized = await session.initialize()
+                        health = await session.call_tool("graph_health", {})
+                        return initialized.server_info.name, health.structured_content
+
+            server_name, health = anyio.run(scenario)
+
+        self.assertEqual(server_name, "palgwae")
+        self.assertEqual(health["status"], "PASS")
+
     def test_all_client_distributions_return_identical_structured_results(self):
         with tempfile.TemporaryDirectory() as temporary:
             bundle = Path(temporary) / "bundle"
@@ -46,7 +79,7 @@ class CrossAgentMcpTest(unittest.TestCase):
                     command=command,
                     args=args,
                     cwd=ROOT,
-                    env=dict(os.environ),
+                    env={**os.environ, "PALGWAE_PROJECT_ROOT": temporary},
                 )
                 async with stdio_client(parameters) as streams:
                     async with ClientSession(*streams) as session:

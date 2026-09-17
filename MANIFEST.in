@@ -20,8 +20,10 @@ recursive-include integrations/graphify *.md *.toml *.lock *.py *.json
 recursive-include ontology *
 recursive-include plugins *
 recursive-include web *
+recursive-include assets/branding *.png *.md
 
 prune integrations/graphify/.venv
 prune integrations/graphify/.pytest_cache
+prune plugins/palgwae/runtime/.venv
 global-exclude *.py[cod]
 global-exclude __pycache__

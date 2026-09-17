@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from pathlib import Path
+import tomllib
 import unittest
 
 
@@ -10,6 +12,18 @@ EXPECTED_ARGS = [
     "mcp",
     "--bundle",
     ".palgwae/bundle",
+    "--transport",
+    "stdio",
+]
+CODEX_ARGS = [
+    "run",
+    "--no-project",
+    "--script",
+    "./bin/palgwae-mcp.py",
+    "mcp",
+    "--bundle",
+    ".palgwae/bundle",
+    "--bootstrap",
     "--transport",
     "stdio",
 ]
@@ -36,8 +50,15 @@ class ClientDistributionTest(unittest.TestCase):
 
         self.assertEqual(manifest["name"], "palgwae")
         self.assertEqual(manifest["mcpServers"], "./.mcp.json")
-        self.assertEqual(servers["palgwae"]["command"], "palgwae")
-        self.assertEqual(servers["palgwae"]["args"], EXPECTED_ARGS)
+        self.assertEqual(
+            servers["palgwae"]["command"], "uv"
+        )
+        self.assertEqual(servers["palgwae"]["args"], CODEX_ARGS)
+        self.assertEqual(servers["palgwae"]["cwd"], ".")
+        self.assertEqual(servers["palgwae"]["startup_timeout_sec"], 120)
+        self.assertTrue((plugin / "bin" / "palgwae-mcp.py").is_file())
+        self.assertTrue((plugin / "bin" / "resolve-owner-root.py").is_file())
+        self.assertTrue((plugin / "runtime" / "pyproject.toml").is_file())
         self.assertTrue(
             (plugin / "skills" / "trace-pipeline" / "SKILL.md").is_file()
         )
@@ -70,6 +91,50 @@ class ClientDistributionTest(unittest.TestCase):
             "]", 1
         )[0]
         self.assertNotIn("graphify", dependency_section.casefold())
+
+    def test_bundled_codex_runtime_matches_the_canonical_python_source(self):
+        canonical = ROOT / "src" / "palgwae"
+        bundled = ROOT / "plugins" / "palgwae" / "runtime" / "src" / "palgwae"
+        canonical_files = sorted(path.relative_to(canonical) for path in canonical.rglob("*.py"))
+        bundled_files = sorted(path.relative_to(bundled) for path in bundled.rglob("*.py"))
+
+        self.assertEqual(bundled_files, canonical_files)
+        for name in canonical_files:
+            self.assertEqual(
+                (bundled / name).read_bytes(),
+                (canonical / name).read_bytes(),
+                f"bundled runtime is stale: {name}",
+            )
+
+    def test_bundled_runtime_dependencies_match_the_root_package(self):
+        root = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+        bundled = tomllib.loads(
+            (ROOT / "plugins/palgwae/runtime/pyproject.toml").read_text()
+        )["project"]
+        self.assertEqual(bundled["version"], root["version"])
+        self.assertEqual(sorted(bundled["dependencies"]), sorted(root["dependencies"]))
+
+    def test_owner_resolver_accepts_codex_cd_forms_only_for_directories(self):
+        resolver_path = (
+            ROOT / "plugins" / "palgwae" / "bin" / "resolve-owner-root.py"
+        )
+        module_spec = importlib.util.spec_from_file_location(
+            "palgwae_owner_resolver", resolver_path
+        )
+        self.assertIsNotNone(module_spec)
+        self.assertIsNotNone(module_spec.loader)
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+
+        self.assertEqual(
+            module._directory_argument(["codex", "-C", str(ROOT)]), ROOT
+        )
+        self.assertEqual(
+            module._directory_argument(["codex", f"--cd={ROOT}"]), ROOT
+        )
+        self.assertIsNone(
+            module._directory_argument(["codex", "--cd", str(ROOT / "missing")])
+        )
 
 
 if __name__ == "__main__":

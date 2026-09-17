@@ -1,8 +1,9 @@
 # Connect your coding agent
 
-Install the [CLI](installation.md), then run `palgwae init` in your repository.
-The default bundle is `.palgwae/bundle`. The executable must be on the host's
-PATH; restart desktop hosts after installing it.
+Claude Code and OpenCode require the [CLI](installation.md) on PATH and a
+bundle created by `palgwae init` or `palgwae build`. The default bundle is
+`.palgwae/bundle`; restart desktop hosts after installing the CLI. The Codex
+plugin bundles its own runtime and can bootstrap a missing bundle.
 
 ## Claude Code
 
@@ -34,10 +35,44 @@ repo/personal sources in the desktop Plugins Directory. Local-source
 availability varies by surface. See
 [OpenAI plugin packaging](https://developers.openai.com/plugins/build/plugins).
 
-The configuration starts `palgwae mcp --bundle .palgwae/bundle`. If a host uses
-another working directory, put the absolute bundle path printed by `init`
-in your local MCP configuration. Never publish your machine-specific path in
-the plugin distribution.
+The Codex distribution lives under `plugins/palgwae`. It bundles the Python
+runtime, a launcher, the MCP server declaration, and a `trace-pipeline` skill.
+Only `uv` is required on the host; a global `palgwae` installation is not.
+Validate the plugin with the OpenAI plugin validator before publishing it to a
+marketplace.
+
+Codex starts the launcher from the installed plugin root. The launcher restores
+the inherited owner repository (with parent-process lookup as a fallback)
+before resolving the project-relative bundle. `PALGWAE_PROJECT_ROOT` is an
+explicit override for hosts that do not preserve the owner directory or expose
+their parent working directory. Codex CLI `--cd`/`-C` is resolved from the
+parent argv; `/proc` and `lsof` cover ordinary current-directory launches.
+
+On the first MCP start, the launcher initializes `.palgwae/bundle` in the
+current owner repository:
+
+- a root `palgwae-context-graph.yaml`, `.yml`, or `.json` is compiled when
+  present (`.palgwae/context-graph.yaml`, `.yml`, or `.json` is also discovered);
+- otherwise a fail-closed starter is written with one repository node, no
+  accepted claims, and one unresolved extraction boundary;
+- an existing bundle is hash-validated and never silently replaced;
+- concurrent first starts are serialized by a project-local bootstrap lock;
+- a partial or non-empty bundle directory is preserved and startup fails with
+  an actionable error.
+
+The bootstrap write is why the plugin declares both Read and Write capability,
+even though all seven MCP tools remain read-only. To initialize explicitly
+outside Codex, run:
+
+```bash
+palgwae bootstrap --project-root . --output .palgwae/bundle
+```
+
+
+A starter is not extracted pipeline context. Use `palgwae init` for supported
+Airflow sources, or build an evidence-backed project spec, then restart MCP.
+For an alternate bundle location, update the local MCP configuration without
+publishing machine-specific paths in the plugin distribution.
 
 ## ChatGPT remote MCP and public directory
 

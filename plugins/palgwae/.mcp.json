@@ -1,14 +1,21 @@
 {
   "mcpServers": {
     "palgwae": {
-      "command": "palgwae",
+      "command": "uv",
       "args": [
+        "run",
+        "--no-project",
+        "--script",
+        "./bin/palgwae-mcp.py",
         "mcp",
         "--bundle",
         ".palgwae/bundle",
+        "--bootstrap",
         "--transport",
         "stdio"
-      ]
+      ],
+      "cwd": ".",
+      "startup_timeout_sec": 120
     }
   }
 }
