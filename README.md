@@ -432,6 +432,13 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) and
 [the roadmap](docs/roadmap.md). Please propose one evidence rule or adapter at
 a time so its trust boundary stays reviewable.
 
+## Author
+
+Created by Yonghyeok Rhee.
+
+[LinkedIn](https://www.linkedin.com/in/yong) ·
+[Blog](https://yonghyeokrhee.github.io/)
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
