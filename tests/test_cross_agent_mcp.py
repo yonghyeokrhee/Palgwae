@@ -30,8 +30,9 @@ def _client_commands() -> dict[str, tuple[str, list[str]]]:
     )["mcp"]["palgwae"]["command"]
     return {
         "codex": (
-            str(codex_plugin / codex["command"].removeprefix("./")),
-            codex["args"],
+            codex["command"],
+            [str(codex_plugin / arg.removeprefix("./"))
+             if arg.startswith("./bin/") else arg for arg in codex["args"]],
         ),
         "claude": (claude["command"], claude["args"]),
         "opencode": (opencode[0], opencode[1:]),
@@ -54,7 +55,7 @@ class CrossAgentMcpTest(unittest.TestCase):
                     command=command,
                     args=args,
                     cwd=ROOT,
-                    env=dict(os.environ),
+                    env={**os.environ, "PALGWAE_PROJECT_ROOT": temporary},
                 )
                 async with stdio_client(parameters) as streams:
                     async with ClientSession(*streams) as session:
@@ -78,7 +79,7 @@ class CrossAgentMcpTest(unittest.TestCase):
                     command=command,
                     args=args,
                     cwd=ROOT,
-                    env=dict(os.environ),
+                    env={**os.environ, "PALGWAE_PROJECT_ROOT": temporary},
                 )
                 async with stdio_client(parameters) as streams:
                     async with ClientSession(*streams) as session:

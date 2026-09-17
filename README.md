@@ -4,13 +4,20 @@
   <img src="assets/branding/palgwae-logo-v4.png" alt="Palgwae — eight trigrams expressing complex relationships through simple forms" width="640">
 </p>
 
-**Untangle the eightfold complexity of data pipelines.**
+**Trace Airflow change impact. Show the evidence. Keep unknowns explicit.**
 
-Palgwae is an evidence-bounded context graph for data pipelines, the
-repositories that define them, and the developers and agents that need to
-change them safely.
+Palgwae gives developers and coding agents a local graph of declared pipeline
+dependencies. Ask what follows a task, which DAG waits on it, and where each
+relationship is written in source.
 
-> **Eight views. One provable flow.**
+It reads Airflow Python files without importing DAGs or running jobs. Queries
+use a portable JSONL snapshot, with no required database, API key, or model call.
+Connect the same read-only MCP server to Claude Code, Codex, or another MCP
+client.
+
+> Early alpha, 0.3.0. Supports a documented subset of classic Airflow and
+> TaskFlow control flow. It does not prove that tasks ran or infer dataset
+> lineage from arbitrary Python. [Supported patterns and limits](docs/airflow.md).
 
 ### The idea behind the name
 
@@ -46,122 +53,73 @@ Together they expose dependencies that disappear when lineage, orchestration,
 deployment, and operational knowledge are inspected separately. See the
 [Eightfold Context Model](docs/eightfold-context-model.md).
 
-The project is deliberately small:
+## Try it
 
-- local JSONL files instead of a required graph database;
-- deterministic traversal instead of an LLM in the query path;
-- every accepted edge points to source evidence;
-- `UNKNOWN` means "not proven", never "does not exist";
-- CLI and Model Context Protocol (MCP) access use the same graph bundle.
+For agent-led setup, copy the [one-go installation prompt](#one-go-setup-prompt-for-an-ai-agent).
 
-No API key, embedding model, vector database, or cloud account is required.
-The optional Graphify adapter is build-time only and never enters the MCP
-runtime dependency set.
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then
+install a [release wheel](https://github.com/yonghyeokrhee/Palgwae/releases).
+The [installation guide](docs/installation.md) also covers pnpm, Bun, npm,
+and source checkouts. PyPI and npm registry publication are separate channels
+and are not currently advertised as available.
 
-> Status: early alpha. The first release proves the file contracts,
-> evidence rules, traversal behavior, and a generic retail-pipeline example.
+```sh
+palgwae example
+palgwae init --source palgwae-example --namespace urn:example:palgwae:airflow
+palgwae find publish --bundle .palgwae/bundle
+palgwae downstream urn:example:palgwae:airflow/task/daily_orders/publish --bundle .palgwae/bundle
+```
 
-## Why Palgwae?
-
-Code graphs are good at calls, imports, and symbols. Data catalogs are good at
-datasets, ownership, and observed lineage. A data engineering change often
-crosses both:
+The fictional example declares this path:
 
 ```text
-schedule -> orchestrator -> job -> queue -> job -> dataset
-                                      |
-                                      +-> marker/contract -> service
+daily_orders.publish -> reporting.wait_for_orders -> reporting.report
 ```
 
-The missing context is usually the binding among all eight views. Palgwae keeps
-those relationships together and makes the evidence behind each relationship
-retrievable.
+Results contain accepted claims and source evidence. `UNKNOWN` means a
+relationship was not proven, not that it cannot exist.
 
-It complements tools such as OpenLineage, DataHub, OpenMetadata, dbt, and code
-knowledge graphs. Future adapters can ingest their metadata; this project does
-not try to replace them. See [prior art and boundaries](docs/prior-art.md).
+For your repository:
 
-## How it works
-
-```mermaid
-flowchart LR
-    A["Repositories, configs, SQL"] --> B["Adapters"]
-    R["Runtime metadata"] --> B
-    H["Human decisions"] --> B
-    B --> C["Candidate nodes and claims"]
-    C --> D{"Evidence and ontology gates"}
-    D -->|"accepted"| E["Portable graph bundle"]
-    D -->|"not proven"| U["Unresolved / UNKNOWN"]
-    E --> Q["CLI"]
-    E --> M["MCP: stdio or localhost HTTP"]
-    Q --> X["Developers and CI"]
-    M --> Y["AI coding agents"]
+```sh
+palgwae init --source ./dags --namespace https://example.org/engineering/pipelines
 ```
 
-The graph bundle contains:
+Use a namespace your organization controls. `init` writes the graph and prints
+MCP setup; it does not change your agent settings. After source changes, rebuild
+the bundle and restart MCP. `doctor` checks snapshot integrity, not live source
+freshness.
+
+## Install the plugin
+
+With the CLI installed and a bundle in your project, in Claude Code:
 
 ```text
-graph/
-  nodes.jsonl       canonical entities
-  claims.jsonl      typed relationships
-  evidence.jsonl    pinned source provenance
-  unresolved.jsonl  boundaries that remain unproven
-  manifest.json     graph hashes, snapshot identity, and ontology hashes
+/plugin marketplace add yonghyeokrhee/Palgwae
+/plugin install palgwae@palgwae
 ```
 
-See [the Eightfold Context Model](docs/eightfold-context-model.md) for the
-concept, [the methodology](docs/methodology.md) for the acceptance rubric, and
-[the ontology guide](docs/ontology.md) for relation direction.
+For Codex:
 
-For a zero-server view, open `web/explorer.html` and select `manifest.json`
-plus the bundle's four JSONL files. The static explorer verifies their hashes,
-has no external dependencies, and uploads nothing.
+```sh
+codex plugin marketplace add yonghyeokrhee/Palgwae
+codex plugin add palgwae@palgwae
+```
 
-## Quick start
+Try: “Find the publish task. Show the downstream tasks, the evidence for each
+edge, and anything unresolved.”
 
-Want your agent to handle setup? Copy the
-[one-go installation prompt](#one-go-setup-prompt-for-an-ai-agent) from your
-owner-project workspace. For manual setup, start below.
+See [agent setup](docs/cross-agent-plugins.md) for PATH/bundle configuration,
+OpenCode, and ChatGPT. ChatGPT remote connections and public-directory
+submission have additional endpoint and registration requirements; this repo
+does not provide a hosted account service.
 
-Requirements: Python 3.11+ and [uv](https://docs.astral.sh/uv/).
+### Source-checkout MCP setup
 
 ```bash
 git clone https://github.com/yonghyeokrhee/Palgwae.git
 cd Palgwae
 uv sync --frozen
-
-# Build the bundled fictional retail example.
-uv run palgwae build examples/retail_pipeline/context-graph.yaml \
-  --output .palgwae/demo
-
-# Fail closed if files or evidence no longer match the manifest.
-uv run palgwae doctor --bundle .palgwae/demo
-
-# Run the executable retrieval contract.
-uv run palgwae eval --bundle .palgwae/demo \
-  --golden examples/retail_pipeline/golden.yaml
-
-# Resolve a name before traversing.
-uv run palgwae find orders_daily --bundle .palgwae/demo
-
-# Follow an evidence-backed blast radius.
-uv run palgwae downstream urn:example:palgwae:demo:dataset:orders-daily \
-  --bundle .palgwae/demo --max-hops 4
-```
-
-The `urn:example:palgwae:*` IDs above are fictional fixture identifiers. Real
-adapters must use a canonical URI namespace controlled by the deploying
-organization.
-
-Start an MCP server for any compatible coding agent:
-
-```bash
-# One process per agent, no open port.
-uv run palgwae mcp --bundle .palgwae/demo --transport stdio
-
-# Or a shared loopback endpoint.
-uv run palgwae mcp --bundle .palgwae/demo \
-  --transport http --host 127.0.0.1 --port 8765
 ```
 
 Generic MCP client configuration:
@@ -207,7 +165,7 @@ repository relationships were extracted.
 
 The **owner project** is the repository whose pipelines you want to query;
 it is separate from the Palgwae checkout. The commands below use the source
-checkout from Quick start, not a package assumed to exist on PyPI. For
+checkout above, not a package assumed to exist on PyPI. For
 reproducible installations, check out a reviewed Palgwae commit and keep its
 `uv.lock` unchanged.
 
@@ -364,73 +322,65 @@ The practical result is intentionally narrower than “MCP beats search”:
   benchmark. Treat the numbers as an initial case study and reproduce the
   comparison on your own repositories and questions.
 
-## Optional Graphify candidate extraction
 
-Graphify can expand candidate coverage across code repositories without
-becoming a source of accepted truth. Its dependency is isolated under
-`integrations/graphify` with a separate lockfile:
+## What it verifies
 
-```bash
-cd integrations/graphify
-uv sync --frozen
-uv run palgwae-graphify --help
+The Airflow adapter extracts candidates, then applies explicit rules for literal
+DAG/task membership, dependency operators, basic TaskFlow inputs, and resolvable
+ExternalTaskSensor targets. Every accepted edge has pinned source provenance.
+Dynamic construction is left unresolved where detected.
+
+An existing-repository exercise found 26 DAGs, 99 tasks, 78 within-DAG
+dependencies, and seven cross-DAG sensor relationships. Rebuilds matched and
+retained source evidence passed hash/locator checks. This was static validation,
+not a runtime test or accuracy benchmark. Read [the results and limits](docs/validation.md).
+
+| MCP tool | Use |
+| --- | --- |
+| `graph_health` | Check bundle integrity and snapshot identity |
+| `find_entity` | Resolve a name or canonical ID |
+| `get_upstream`, `get_downstream` | Traverse accepted dependencies |
+| `find_dependency_path` | Explain a path between two entities |
+| `assess_change_impact` | Summarize declared downstream impact |
+| `get_claim_evidence` | Retrieve pinned source provenance |
+
+## Why the evidence boundary matters
+
+A call graph, a data catalog, and an orchestrator each capture part of a pipeline.
+Palgwae's longer-term model connects eight views: data flow, control flow,
+infrastructure, contracts, runtime state, lifecycle, ownership, and evidence.
+The name comes from 팔괘, used as a modern metaphor for these views.
+
+The first automatic adapter covers Airflow control flow. The
+[original YAML compiler and retail example](examples/retail_pipeline/context-graph.yaml)
+demonstrate the broader ontology:
+
+```sh
+uv run palgwae build examples/retail_pipeline/context-graph.yaml --output .palgwae/retail
+uv run palgwae doctor --bundle .palgwae/retail
+uv run palgwae eval --bundle .palgwae/retail --golden examples/retail_pipeline/golden.yaml
 ```
 
-The adapter always emits a candidate ledger with zero accepted claims.
-Canonical identity resolution and predicate-specific verification remain
-Palgwae responsibilities. See the
-[Graphify integration boundary](docs/graphify-integration.md).
+See [the model](docs/eightfold-context-model.md), [methodology](docs/methodology.md),
+[ontology](docs/ontology.md), and [prior art](docs/prior-art.md). Palgwae
+complements lineage/catalog tools; it does not replace their runtime collection.
 
-## MCP tools
+Bundles hold `nodes.jsonl`, `claims.jsonl`, `evidence.jsonl`,
+`unresolved.jsonl`, and `manifest.json`. The source checkout's
+`web/explorer.html` can inspect these locally without uploads.
+[Privacy and trust boundaries](docs/privacy.md) apply when sharing a bundle
+with an agent or another person.
 
-The server is read-only:
+## Contribute
 
-| Tool | Purpose |
-|---|---|
-| `graph_health` | Verify snapshot identity and file hashes |
-| `find_entity` | Resolve names and aliases to canonical IDs |
-| `get_upstream` | Return evidence-backed upstream paths |
-| `get_downstream` | Return evidence-backed downstream paths |
-| `find_dependency_path` | Explain a path between two entities |
-| `assess_change_impact` | Summarize direct and transitive impact |
-| `get_claim_evidence` | Return the provenance of one claim |
+Start with a synthetic DAG that illustrates one missing pattern or a case
+that must remain unknown. We welcome adapter improvements, negative tests,
+and clearer examples. See [CONTRIBUTING.md](CONTRIBUTING.md),
+[the roadmap](docs/roadmap.md), and [support](SUPPORT.md).
 
-Agent rule: call `find_entity` first. A traversal that returns `UNKNOWN` has
-insufficient accepted evidence; it is not proof that no dependency exists.
-
-## What belongs in the graph?
-
-The default ontology covers the Eightfold Context Model:
-
-- data and control flow;
-- infrastructure and environments;
-- message, data, marker, and argument contracts;
-- runtime observations and lifecycle assertions;
-- repositories, services, and cross-repository ownership;
-- evidence records, review status, and unresolved boundaries.
-
-An edge is accepted only when its endpoints are canonical, the relation is
-allowed by the ontology, and its evidence is pinned to a reproducible source.
-Narrative documentation and runtime activity are valuable evidence, but neither
-automatically proves a source-code dependency.
-
-## Start contributing
-
-The project intentionally begins with one adapter-neutral spec and one demo.
-Useful first contributions are small:
-
-- an OpenLineage event adapter;
-- dbt `manifest.json` ingestion;
-- Airflow DAG and task extraction;
-- SQL table/column lineage;
-- Terraform resource bindings;
-- a candidate-claim review UI;
-- predicate-specific candidate promotion verifiers;
-- more Golden questions and negative tests.
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and
-[the roadmap](docs/roadmap.md). Please propose one evidence rule or adapter at
-a time so its trust boundary stays reviewable.
+Optional [Graphify candidate extraction](docs/graphify-integration.md) is isolated
+under `integrations/graphify` and is not part of the MCP runtime. Its output
+contains zero accepted claims until separately verified.
 
 ## Author
 
@@ -441,4 +391,5 @@ Created by Yonghyeok Rhee.
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+Apache-2.0. See [LICENSE](LICENSE), [third-party notices](THIRD_PARTY_NOTICES.md),
+[security](SECURITY.md), and [governance](GOVERNANCE.md).

@@ -15,6 +15,10 @@ EXPECTED_ARGS = [
     "stdio",
 ]
 CODEX_ARGS = [
+    "run",
+    "--no-project",
+    "--script",
+    "./bin/palgwae-mcp.py",
     "mcp",
     "--bundle",
     ".palgwae/bundle",
@@ -46,12 +50,12 @@ class ClientDistributionTest(unittest.TestCase):
         self.assertEqual(manifest["name"], "palgwae")
         self.assertEqual(manifest["mcpServers"], "./.mcp.json")
         self.assertEqual(
-            servers["palgwae"]["command"], "./bin/palgwae-mcp"
+            servers["palgwae"]["command"], "uv"
         )
         self.assertEqual(servers["palgwae"]["args"], CODEX_ARGS)
         self.assertEqual(servers["palgwae"]["cwd"], ".")
         self.assertEqual(servers["palgwae"]["startup_timeout_sec"], 120)
-        self.assertTrue((plugin / "bin" / "palgwae-mcp").is_file())
+        self.assertTrue((plugin / "bin" / "palgwae-mcp.py").is_file())
         self.assertTrue((plugin / "bin" / "resolve-owner-root.py").is_file())
         self.assertTrue((plugin / "runtime" / "pyproject.toml").is_file())
         self.assertTrue(
@@ -90,8 +94,8 @@ class ClientDistributionTest(unittest.TestCase):
     def test_bundled_codex_runtime_matches_the_canonical_python_source(self):
         canonical = ROOT / "src" / "palgwae"
         bundled = ROOT / "plugins" / "palgwae" / "runtime" / "src" / "palgwae"
-        canonical_files = sorted(path.name for path in canonical.glob("*.py"))
-        bundled_files = sorted(path.name for path in bundled.glob("*.py"))
+        canonical_files = sorted(path.relative_to(canonical) for path in canonical.rglob("*.py"))
+        bundled_files = sorted(path.relative_to(bundled) for path in bundled.rglob("*.py"))
 
         self.assertEqual(bundled_files, canonical_files)
         for name in canonical_files:

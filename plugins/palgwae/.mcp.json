@@ -1,8 +1,12 @@
 {
   "mcpServers": {
     "palgwae": {
-      "command": "./bin/palgwae-mcp",
+      "command": "uv",
       "args": [
+        "run",
+        "--no-project",
+        "--script",
+        "./bin/palgwae-mcp.py",
         "mcp",
         "--bundle",
         ".palgwae/bundle",

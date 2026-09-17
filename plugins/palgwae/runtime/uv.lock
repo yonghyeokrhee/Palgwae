@@ -319,9 +319,9 @@ wheels = [
 ]
 
 [[package]]
-name = "palgwae-plugin-runtime"
-version = "0.2.0"
-source = { virtual = "." }
+name = "palgwae"
+version = "0.3.0"
+source = { editable = "." }
 dependencies = [
     { name = "mcp" },
     { name = "pyyaml" },
