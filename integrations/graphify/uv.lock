@@ -8,7 +8,7 @@ resolution-markers = [
 
 [[package]]
 name = "graphifyy"
-version = "0.9.46"
+version = "0.9.58"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "networkx" },
@@ -42,9 +42,9 @@ dependencies = [
     { name = "tree-sitter-verilog" },
     { name = "tree-sitter-zig" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/92/2360425b301a32b14df5bbacbc06040cc61427dad395ae39d0122d5d874e/graphifyy-0.9.46.tar.gz", hash = "sha256:9af794a52d550fd87e0e3c3f68cbf81409109cf11c175aa0088bb28d10124fda", size = 1920681, upload-time = "2026-08-17T18:43:24.898Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d1/f8/d738c8aeda0405449057887a2f848f3d3daea45f0bcc21b810924c78be94/graphifyy-0.9.58.tar.gz", hash = "sha256:169598570fa226de76b7fe24052980da06f307877483baacabd034abd73fb175", size = 2177207, upload-time = "2026-09-10T22:35:38.167Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/a4/40f776860efcaa0cfc411c463ffa5b05ccf8093c044d518e598cc2d17cb1/graphifyy-0.9.46-py3-none-any.whl", hash = "sha256:35d854d66884c623a8e25ca059b54744ade91ae17ffc0f79fd39e108a1666b5d", size = 1316004, upload-time = "2026-08-17T18:43:23.002Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/e3/5654558956032fdf67161932575de6e31a67a37eeaceb9fb56e56be59b90/graphifyy-0.9.58-py3-none-any.whl", hash = "sha256:e239803288e91c723d6e30540860bd6d5a1dc3f0914b9fc1104b0233e98aaeb8", size = 1411588, upload-time = "2026-09-10T22:35:36.24Z" },
 ]
 
 [package.optional-dependencies]
@@ -231,7 +231,7 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "graphifyy", extras = ["sql", "terraform"], specifier = "==0.9.46" }]
+requires-dist = [{ name = "graphifyy", extras = ["sql", "terraform"], specifier = "==0.9.58" }]
 
 [[package]]
 name = "rapidfuzz"
