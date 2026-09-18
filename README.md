@@ -4,23 +4,42 @@
   <img src="assets/branding/palgwae-logo-v4.png" alt="Palgwae — eight trigrams expressing complex relationships through simple forms" width="640">
 </p>
 
-**Understand data relationships and change impact. Show the evidence. Keep unknowns explicit.**
+**Understand ETL dependencies and change impact. Show the evidence. Keep unknowns explicit.**
 
-Palgwae is an evidence-backed context graph for data engineers and coding agents.
-It is designed to make relationships among repositories, jobs, tables, services,
-and contracts explicit, so engineers and agents can reason about dependencies,
-lineage, and the consequences of change over time.
+Palgwae gives data engineers and coding agents an evidence-backed graph of
+ETL/ELT pipeline interdependencies: which repositories define the jobs, what
+data those jobs read and write, and which downstream jobs and services depend
+on their outputs and contracts.
 
-Queries use a portable JSONL snapshot, with no required database, API key, or model call.
-Connect the same read-only MCP server to Claude Code, Codex, or another MCP
-client.
+Data lineage is one part of that picture. Execution order, deployment bindings,
+completion signals, consumer requirements, and ownership also matter when a
+pipeline changes. Palgwae models them as distinct relationships in the same
+graph, preserving source evidence and explicitly unresolved boundaries.
+
+The model is designed to retain context about how these relationships evolve,
+including replacements, migrations, and changes to contracts. Airflow supplies
+scheduling and task-dependency information; it is one component of a pipeline,
+not the boundary of Palgwae.
+
+Engineers and agents query the same portable JSONL snapshot through the CLI or
+read-only MCP server, without a required database, API key, or model call.
 
 > Early alpha, 0.3.0. The current release supports a generic YAML-defined graph
 > and source extraction for a documented subset of Airflow, without importing
-> DAGs or running jobs. Airflow is an adapter, not the project boundary.
-> Automatic cross-repository discovery, arbitrary-code table lineage, and full
-> historical queries are not implemented.
+> DAGs or running jobs. The broader model does not imply automatic extraction
+> from every source: cross-repository discovery, arbitrary-code table lineage,
+> and full historical/as-of queries are not implemented.
 > [Supported Airflow patterns and limits](docs/airflow.md).
+
+### Questions the graph helps answer
+
+- Which jobs produce and consume this table, and where are they defined?
+- Which downstream consumers require an output or a completion contract?
+- If a producer changes, which dependency paths need review, and what source
+  evidence supports each relationship?
+
+Answers are limited to the accepted relationships in the selected snapshot.
+An impact path is a reason to investigate, not proof that a proposed change is safe.
 
 ### The idea behind the name
 
@@ -56,42 +75,66 @@ Together they expose dependencies that disappear when lineage, orchestration,
 deployment, and operational knowledge are inspected separately. See the
 [Eightfold Context Model](docs/eightfold-context-model.md).
 
-## Try it
+## Try an end-to-end ETL graph
 
 For agent-led setup, copy the [one-go installation prompt](#one-go-setup-prompt-for-an-ai-agent).
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then
-install a [release wheel](https://github.com/yonghyeokrhee/Palgwae/releases).
-The [installation guide](docs/installation.md) also covers pnpm, Bun, npm,
-and source checkouts. PyPI and npm registry publication are separate channels
-and are not currently advertised as available.
+The repository includes a fictional retail pipeline connecting extraction,
+transformation, datasets, a readiness contract, and an application service.
+It is a prepared, source-backed YAML graph, not an automatic extraction demo.
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and run in
+a fresh source checkout:
 
 ```sh
-palgwae example
-palgwae init --source palgwae-example --namespace urn:example:palgwae:airflow
-palgwae find publish --bundle .palgwae/bundle
-palgwae downstream urn:example:palgwae:airflow/task/daily_orders/publish --bundle .palgwae/bundle
+git clone https://github.com/yonghyeokrhee/Palgwae.git
+cd Palgwae
+uv sync --frozen
+uv run palgwae build examples/retail_pipeline/context-graph.yaml --output .palgwae/bundle
+uv run palgwae doctor --bundle .palgwae/bundle
+uv run palgwae eval --bundle .palgwae/bundle --golden examples/retail_pipeline/golden.yaml
+uv run palgwae find orders_daily --bundle .palgwae/bundle
+uv run palgwae upstream urn:example:palgwae:demo:dataset:orders-daily --bundle .palgwae/bundle --max-hops 4
+uv run palgwae downstream urn:example:palgwae:demo:dataset:orders-daily --bundle .palgwae/bundle --max-hops 4
 ```
 
-The fictional example declares this path:
+If reusing a checkout, choose a new output directory rather than overwrite an
+existing bundle. The fixture models two connected kinds of dependency:
 
 ```text
-daily_orders.publish -> reporting.wait_for_orders -> reporting.report
+Data:      raw_orders -> extract_orders -> orders_bronze -> build_orders_daily -> orders_daily -> orders_api
+Readiness: publish_orders -> orders-daily-ready-v1 -> orders_api
 ```
+
+The downstream query reaches the publishing job, readiness marker, and API
+consumer; the graph also retains the unresolved dynamic notification target.
+No Airflow scheduler, ETL job, or database is started. These are declared
+relationships, not evidence of a completed run.
 
 Results contain accepted claims and source evidence. `UNKNOWN` means a
-relationship was not proven, not that it cannot exist.
+relationship was not proven, not that it cannot exist. `doctor` checks snapshot
+integrity, not live source freshness or complete dependency coverage.
 
-For your repository:
+For an installed CLI, the [installation guide](docs/installation.md) covers
+[release wheels](https://github.com/yonghyeokrhee/Palgwae/releases), pnpm, Bun,
+and npm-format archives. The retail walkthrough above uses fixture files from
+the source checkout. PyPI and npm registry publication are separate channels
+and are not currently advertised as available.
+
+### Airflow source adapter
+
+The current Airflow adapter can populate the execution-dependency part of a
+graph from supported DAG source. To try it separately from the retail graph:
 
 ```sh
-palgwae init --source ./dags --namespace https://example.org/engineering/pipelines
+uv run palgwae example
+uv run palgwae init --source palgwae-example --namespace urn:example:palgwae:airflow --output .palgwae/airflow
 ```
 
-Use a namespace your organization controls. `init` writes the graph and prints
-MCP setup; it does not change your agent settings. After source changes, rebuild
-the bundle and restart MCP. `doctor` checks snapshot integrity, not live source
-freshness.
+For real DAGs, replace the source path and use a namespace your organization
+controls. `init` writes that adapter's bundle and prints MCP setup; it does not
+change your agent settings or infer a complete ETL graph. See
+[Airflow support](docs/airflow.md) for its extraction boundaries. After source
+changes, rebuild the relevant bundle and restart MCP.
 
 ## Install the plugin
 
@@ -109,8 +152,9 @@ codex plugin marketplace add yonghyeokrhee/Palgwae
 codex plugin add palgwae@palgwae
 ```
 
-Try: “Find the publish task. Show the downstream tasks, the evidence for each
-edge, and anything unresolved.”
+Try: “Find `orders_daily`. Show its upstream producers, downstream jobs and
+services, relevant contracts, the evidence for each relationship, and anything
+unresolved.”
 
 See [agent setup](docs/cross-agent-plugins.md) for PATH/bundle configuration,
 OpenCode, and ChatGPT. ChatGPT remote connections and public-directory
@@ -328,6 +372,17 @@ The practical result is intentionally narrower than “MCP beats search”:
 
 ## What it verifies
 
+Palgwae checks the portable graph's structure, ontology bindings, evidence
+records, and stored hashes. Queries follow accepted relationships and return
+their source provenance; the retail Golden tests exercise table dependencies,
+a schedule-to-contract path, downstream service impact, and an unknown target.
+These checks do not establish exhaustive extraction, runtime success, or that
+every declared contract is enforced in production.
+
+Source extraction has separate, adapter-specific rules and validation results.
+
+### Airflow adapter validation
+
 The Airflow adapter extracts candidates, then applies explicit rules for literal
 DAG/task membership, dependency operators, basic TaskFlow inputs, and resolvable
 ExternalTaskSensor targets. Every accepted edge has pinned source provenance.
@@ -337,6 +392,8 @@ An existing-repository exercise found 26 DAGs, 99 tasks, 78 within-DAG
 dependencies, and seven cross-DAG sensor relationships. Rebuilds matched and
 retained source evidence passed hash/locator checks. This was static validation,
 not a runtime test or accuracy benchmark. Read [the results and limits](docs/validation.md).
+
+### Agent queries
 
 | MCP tool | Use |
 | --- | --- |
@@ -350,19 +407,15 @@ not a runtime test or accuracy benchmark. Read [the results and limits](docs/val
 ## Why the evidence boundary matters
 
 A call graph, a data catalog, and an orchestrator each capture part of a pipeline.
-Palgwae's longer-term model connects eight views: data flow, control flow,
+Palgwae's core model connects eight views: data flow, control flow,
 infrastructure, contracts, runtime state, lifecycle, ownership, and evidence.
 The name comes from 팔괘, used as a modern metaphor for these views.
 
-The first automatic adapter covers Airflow control flow. The
-[original YAML compiler and retail example](examples/retail_pipeline/context-graph.yaml)
-demonstrate the broader ontology:
-
-```sh
-uv run palgwae build examples/retail_pipeline/context-graph.yaml --output .palgwae/retail
-uv run palgwae doctor --bundle .palgwae/retail
-uv run palgwae eval --bundle .palgwae/retail --golden examples/retail_pipeline/golden.yaml
-```
+The [YAML compiler and retail example](examples/retail_pipeline/context-graph.yaml)
+demonstrate this technology-neutral foundation. Source adapters populate the
+parts they support; limited adapter coverage does not redefine the graph as an
+orchestrator-specific tool. Representing lifecycle and temporal metadata is
+also distinct from implementing full historical queries.
 
 See [the model](docs/eightfold-context-model.md), [methodology](docs/methodology.md),
 [ontology](docs/ontology.md), and [prior art](docs/prior-art.md). Palgwae
@@ -376,9 +429,10 @@ with an agent or another person.
 
 ## Contribute
 
-Start with a synthetic DAG that illustrates one missing pattern or a case
-that must remain unknown. We welcome adapter improvements, negative tests,
-and clearer examples. See [CONTRIBUTING.md](CONTRIBUTING.md),
+Start with a minimal synthetic pipeline that illustrates a dataset, job,
+contract, execution dependency, or a relationship that must remain unknown.
+We welcome adapter improvements, negative tests, and clearer examples.
+See [CONTRIBUTING.md](CONTRIBUTING.md),
 [the roadmap](docs/roadmap.md), and [support](SUPPORT.md).
 
 Optional [Graphify candidate extraction](docs/graphify-integration.md) is isolated
