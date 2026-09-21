@@ -11,6 +11,29 @@ Palgwae reads repositories and emits portable graph bundles. Treat those
 bundles as potentially sensitive because paths, names, and dependencies may
 reveal architecture.
 
+## Dependency maintenance
+
+Palgwae uses a security-only dependency update policy. Routine version-update
+pull requests are disabled; Dependabot alerts and security-update pull requests
+are enabled in repository settings for supported dependencies. The configuration
+covers GitHub Actions, the root Python environment, the optional Graphify
+integration, and the separately locked plugin runtime. The weekly schedule in
+the configuration does not delay security updates.
+
+Security updates still require review and passing checks; they are not
+automatically merged. Dependency upgrades for features, compatibility, or
+end-of-life support are reviewed when preparing a release or resuming active
+development. This policy reduces routine maintenance noise, but does not
+guarantee that every vulnerability is detected or can be fixed automatically.
+
+GitHub does not generate Dependabot alerts for SHA-pinned Actions, which this
+repository uses. Review their upstream security advisories during maintenance;
+do not replace immutable pins merely to enable alerts. See GitHub's
+[dependency graph coverage](https://docs.github.com/en/code-security/reference/supply-chain-security/dependency-graph-supported-package-ecosystems).
+When a Python security fix changes a shared direct dependency, update the root
+and plugin runtime manifests together and regenerate both affected lockfiles;
+their dependency constraints must remain aligned.
+
 ## Before sharing a bundle
 
 - remove credentials and environment payloads;

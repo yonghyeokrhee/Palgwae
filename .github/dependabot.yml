@@ -1,17 +1,29 @@
 version: 2
+# Security-only maintenance: keep Dependabot alerts and security updates enabled
+# in repository settings. A zero limit disables routine version-update PRs,
+# not security-update PRs. The schedule remains a required configuration field.
 updates:
   - package-ecosystem: github-actions
     directory: /
+    open-pull-requests-limit: 0
     groups:
       codeql:
+        applies-to: security-updates
         patterns: ["github/codeql-action/*"]
     schedule:
       interval: weekly
   - package-ecosystem: uv
     directory: /
+    open-pull-requests-limit: 0
     schedule:
       interval: weekly
   - package-ecosystem: uv
     directory: /integrations/graphify
+    open-pull-requests-limit: 0
+    schedule:
+      interval: weekly
+  - package-ecosystem: uv
+    directory: /plugins/palgwae/runtime
+    open-pull-requests-limit: 0
     schedule:
       interval: weekly
