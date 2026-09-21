@@ -56,15 +56,31 @@ an external sensor's runtime conditions are satisfied.
 
 ## Reproduce the public check
 
+With the CLI installed, run the commands below. From a source checkout, prefix
+each command with `uv run --frozen`. The example uses a separate output directory
+so it does not replace the retail walkthrough's `.palgwae/bundle`.
+
 ```sh
 palgwae example
-palgwae init --source palgwae-example --namespace urn:example:palgwae:airflow
+palgwae init --source palgwae-example --namespace urn:example:palgwae:airflow --output .palgwae/airflow
 palgwae path urn:example:palgwae:airflow/task/daily_orders/extract \
-  urn:example:palgwae:airflow/task/reporting/report --bundle .palgwae/bundle
+  urn:example:palgwae:airflow/task/reporting/report --bundle .palgwae/airflow
 ```
 
 Expected path family: extract → validate or transform → publish → wait_for_orders
 → report. The reverse direction must not be reported as a downstream dependency.
+
+`init` writes this adapter's bundle and prints MCP setup; it does not change
+agent settings or infer a complete ETL graph. After editing source, rebuild the
+relevant bundle and restart MCP. Choose a new output directory if you already
+have an Airflow bundle you want to preserve.
+
+## Validation evidence
+
+An existing-repository exercise found 26 DAGs, 99 tasks, 78 within-DAG
+dependencies, and seven cross-DAG sensor relationships. Rebuilds matched and
+retained source evidence passed hash/locator checks. This was static validation,
+not a runtime test or accuracy benchmark. See the [full results and limits](validation.md).
 
 For local validation of your own repository, from a source checkout:
 
