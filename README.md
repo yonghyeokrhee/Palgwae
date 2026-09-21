@@ -120,21 +120,14 @@ and npm-format archives. The retail walkthrough above uses fixture files from
 the source checkout. PyPI and npm registry publication are separate channels
 and are not currently advertised as available.
 
-### Airflow source adapter
+## Supported source adapters
 
-The current Airflow adapter can populate the execution-dependency part of a
-graph from supported DAG source. To try it separately from the retail graph:
+Adapters populate specific parts of the graph; their coverage does not define
+Palgwae's broader model of ETL interdependencies.
 
-```sh
-uv run palgwae example
-uv run palgwae init --source palgwae-example --namespace urn:example:palgwae:airflow --output .palgwae/airflow
-```
-
-For real DAGs, replace the source path and use a namespace your organization
-controls. `init` writes that adapter's bundle and prints MCP setup; it does not
-change your agent settings or infer a complete ETL graph. See
-[Airflow support](docs/airflow.md) for its extraction boundaries. After source
-changes, rebuild the relevant bundle and restart MCP.
+- **Airflow:** Extracts supported DAG/task relationships and declared execution
+  dependencies without running DAGs. See the [adapter documentation](docs/airflow.md)
+  for setup, supported patterns, validation results, and limitations.
 
 ## Install the plugin
 
@@ -379,19 +372,8 @@ a schedule-to-contract path, downstream service impact, and an unknown target.
 These checks do not establish exhaustive extraction, runtime success, or that
 every declared contract is enforced in production.
 
-Source extraction has separate, adapter-specific rules and validation results.
-
-### Airflow adapter validation
-
-The Airflow adapter extracts candidates, then applies explicit rules for literal
-DAG/task membership, dependency operators, basic TaskFlow inputs, and resolvable
-ExternalTaskSensor targets. Every accepted edge has pinned source provenance.
-Dynamic construction is left unresolved where detected.
-
-An existing-repository exercise found 26 DAGs, 99 tasks, 78 within-DAG
-dependencies, and seven cross-DAG sensor relationships. Rebuilds matched and
-retained source evidence passed hash/locator checks. This was static validation,
-not a runtime test or accuracy benchmark. Read [the results and limits](docs/validation.md).
+Source extraction has separate rules and validation results, documented with
+each [supported adapter](#supported-source-adapters).
 
 ### Agent queries
 
